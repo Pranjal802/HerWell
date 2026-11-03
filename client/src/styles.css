@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-manrope: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: #23382f;
+  background: #f7f8f4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-optical-sizing: auto;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid #9db9a5; outline-offset: 3px; }
+
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="dark"] { background: #151c18; }
+html[data-theme="dark"] body,
+html[data-theme="dark"] [class~="bg-[#f7f8f4]"] { background-color: #151c18; color: #e1e9e1; }
+html[data-theme="dark"] main[class*="radial-gradient"] { background-image: none; background-color: #151c18; }
+html[data-theme="dark"] aside,
+html[data-theme="dark"] header,
+html[data-theme="dark"] [class*="bg-white"] { background-color: #202a24; }
+html[data-theme="dark"] [class*="bg-[#f"] { background-color: #1b251f; }
+html[data-theme="dark"] [class*="from-[#f"] { background-image: none; background-color: #202a24; }
+html[data-theme="dark"] [class*="border-[#e"] { border-color: #344239; }
+html[data-theme="dark"] [class*="text-[#"] { color: #d3ded4; }
+html[data-theme="dark"] [class*="text-red-"],
+html[data-theme="dark"] [class*="text-[#a14d46]"],
+html[data-theme="dark"] [class*="text-[#a94841]"] { color: #f0aaa3; }
+html[data-theme="dark"] [class*="bg-[#fbef"] { background-color: #402d2b; }
+html[data-theme="dark"] [class*="bg-[#edf5"] { background-color: #293a2d; }
+html[data-theme="dark"] [class*="bg-[#2f5b48]"] { background-color: #3b7056; }
+html[data-theme="dark"] [class*="bg-[#a94841]"] { background-color: #8d3d37; }
+html[data-theme="dark"] [class*="bg-[#edf3ea]"] { background-color: #2a382e; }
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select { background-color: #1b251f; color: #e1e9e1; border-color: #425248; }
+html[data-theme="dark"] input[type="checkbox"],
+html[data-theme="dark"] input[type="radio"] { accent-color: #9db9a5; }
+html[data-theme="dark"] input[type="date"],
+html[data-theme="dark"] input[type="time"],
+html[data-theme="dark"] input[type="datetime-local"] { color-scheme: dark; }
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder { color: #99a89b; }
+html[data-theme="dark"] :focus-visible { outline-color: #9db9a5; }
