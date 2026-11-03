@@ -4,8 +4,9 @@
   "description": "A private, supportive space for your everyday care.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f7f8f4",
-  "theme_color": "#f7f8f4",
+  "background_color": "#FAF7F0",
+  "theme_color": "#4F7360",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/herwell-icon.svg",
@@ -13,5 +14,10 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    { "name": "Today", "url": "/", "icons": [{ "src": "/herwell-icon.svg", "sizes": "any" }] },
+    { "name": "Add reminder", "url": "/reminders", "icons": [{ "src": "/herwell-icon.svg", "sizes": "any" }] },
+    { "name": "Check-in", "url": "/wellness", "icons": [{ "src": "/herwell-icon.svg", "sizes": "any" }] }
   ]
 }

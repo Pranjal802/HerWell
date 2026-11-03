@@ -13,12 +13,15 @@ import DocumentsPage from "./pages/DocumentsPage.jsx";
 import CalendarPage from "./pages/CalendarPage.jsx";
 import SupportersPage from "./pages/SupportersPage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
+import MorePage from "./pages/MorePage.jsx";
+import RecordForm from "./components/RecordForm.jsx";
 import { localDateKey, occurrenceStatus } from "./lib/recurrence.js";
 import "./styles.css";
 
 function Workspace({ user, setUser, notice, setNotice }) {
   const [records, setRecords] = useState([]);
   const [supporters, setSupporters] = useState([]);
+  const [quickForm, setQuickForm] = useState(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -107,7 +110,7 @@ function Workspace({ user, setUser, notice, setNotice }) {
   }
 
   return (
-    <AppLayout user={user} onLogout={logout} notice={notice} onDismissNotice={() => setNotice("")}>
+    <AppLayout user={user} onLogout={logout} notice={notice} onDismissNotice={() => setNotice("")} onQuickAdd={(category) => setQuickForm({ category })}>
       <Routes>
         <Route path="/" element={<DashboardPage user={user} records={records} onSave={saveRecord} onToggle={toggleRecord} onSkip={skipRecord} onDelete={deleteRecord} onShare={shareRecord} supporters={supporters} />} />
         <Route path="/planner" element={<RecordsPage title="My planner" description="Routines and small plans, at your own pace." category="routine" records={records} onSave={saveRecord} onToggle={toggleRecord} onSkip={skipRecord} onDelete={deleteRecord} onShare={shareRecord} supporters={supporters} />} />
@@ -120,8 +123,10 @@ function Workspace({ user, setUser, notice, setNotice }) {
         <Route path="/documents" element={<DocumentsPage setNotice={setNotice} />} />
         <Route path="/supporters" element={<SupportersPage records={records} onShare={shareRecord} setNotice={setNotice} />} />
         <Route path="/settings" element={<SettingsPage user={user} setUser={setUser} setNotice={setNotice} />} />
+        <Route path="/more" element={<MorePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {quickForm && <RecordForm initial={quickForm} records={records} onClose={() => setQuickForm(null)} onSave={saveRecord} />}
     </AppLayout>
   );
 }
