@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Flower2, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowRight, LockKeyhole, Sparkles } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../lib/api.js";
 import Brand from "../components/Brand.jsx";
@@ -41,26 +41,70 @@ export default function AuthPage({ onLogin, notice }) {
     catch (sendError) { setError(sendError.message); }
   }
 
-  return <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(ellipse_at_18%_72%,#eef2e8_0%,transparent_34%),radial-gradient(ellipse_at_91%_11%,#f1eddf_0%,transparent_29%),#f7f8f4] p-5">
-    <div className="pointer-events-none absolute right-[15%] top-[15%] grid size-56 place-items-center rounded-full bg-[#edf2e8] text-[#9eaf93] opacity-60 max-md:right-[-100px]"><div className="absolute inset-[-20px] rounded-full border border-[#d8e1d3]" /><Flower2 size={54} strokeWidth={1} /></div>
-    <section className="relative w-full max-w-md rounded-2xl border border-[#ebeee8] bg-white/95 p-8 shadow-xl shadow-[#4856400c] max-sm:p-6">
-      <Brand />
-      {notice && <p role="status" className="mb-4 rounded-lg bg-[#edf5eb] p-3 text-xs leading-5 text-[#45664e]">{notice}</p>}
-      <div className="mb-6 mt-8"><p className="flex items-center gap-2 text-[10px] font-bold tracking-[.14em] text-[#829087]"><Sparkles size={14} /> {translate("A LITTLE SPACE FOR YOU")}</p><h1 className="mt-3 font-[Manrope] text-3xl font-semibold leading-tight tracking-tight text-[#2e4637]">{translate("Take care, at your own pace.")}</h1><p className="mt-2 text-sm leading-6 text-[#849087]">{translate("Your plans, reminders and reflections — all together, and just for you.")}</p></div>
-      {(mode === "login" || mode === "register") && <div className="mb-4 grid grid-cols-2 border-b border-[#e9ece5]">{[["login", "Sign in"], ["register", "Create an account"]].map(([key, text]) => <button key={key} type="button" onClick={() => { setMode(key); setError(""); setMessage(""); }} className={`border-b-2 py-2.5 text-xs ${mode === key ? "border-[#6d8b70] font-semibold text-[#46654d]" : "border-transparent text-[#939d95]"}`}>{translate(text)}</button>)}</div>}
-      <form className="space-y-4" onSubmit={submit}>
-        {mode === "register" && <label className="block text-xs font-semibold text-[#516257]">{translate("Your name")}<input className="mt-1 w-full rounded-lg border border-[#e2e8df] bg-[#fbfcfa] px-3 py-2.5 text-sm outline-none focus:border-[#9db59e]" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={60} /></label>}
-        {mode !== "reset" && <label className="block text-xs font-semibold text-[#516257]">{translate("Email address")}<input className="mt-1 w-full rounded-lg border border-[#e2e8df] bg-[#fbfcfa] px-3 py-2.5 text-sm outline-none focus:border-[#9db59e]" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>}
-        {["login", "register", "reset"].includes(mode) && <label className="block text-xs font-semibold text-[#516257]">{translate(mode === "reset" ? "New password" : "Password")}<input className="mt-1 w-full rounded-lg border border-[#e2e8df] bg-[#fbfcfa] px-3 py-2.5 text-sm outline-none focus:border-[#9db59e]" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={72} required /></label>}
-        {message && <p role="status" className="rounded-lg bg-[#edf5eb] p-3 text-xs leading-5 text-[#45664e]">{message}</p>}
-        {error && <p role="alert" className="rounded-lg bg-[#fbefed] p-3 text-xs text-[#a94841]">{error}</p>}
-        <button disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2f5b48] px-4 py-3 text-sm font-semibold text-white hover:bg-[#264b39] disabled:opacity-60">{busy ? translate("One moment…") : translate(mode === "login" ? "Come on in" : mode === "register" ? "Create my space" : mode === "forgot" ? "Send reset link" : "Save new password")}<ArrowRight size={17} /></button>
-      </form>
-      <div className="mt-4 flex flex-wrap justify-between gap-3 text-xs">
-        {(mode === "login" || mode === "forgot") && <button className="text-[#62816a] hover:underline" onClick={() => { setMode(mode === "forgot" ? "login" : "forgot"); setError(""); }}>{translate(mode === "forgot" ? "Back to sign in" : "Forgot your password?")}</button>}
-        {mode === "login" && <button className="text-[#62816a] hover:underline" onClick={resendVerification}>{translate("Resend verification")}</button>}
-      </div>
-      <p className="mt-6 flex items-center justify-center gap-2 text-[10px] text-[#929d94]"><LockKeyhole size={13} />{translate("Your wellness space is private by default.")}</p>
-    </section>
+  const tabs = [["login", "Sign in"], ["register", "Create an account"]];
+  const heading = mode === "forgot" ? "Forgot your password?"
+    : mode === "reset" ? "Choose a new password"
+      : mode === "register" ? "Create your private space"
+        : "A calmer way to care for yourself.";
+
+  return <main className="hw-auth-shell">
+    <div className="hw-auth-orb hw-auth-orb-one" aria-hidden="true" />
+    <div className="hw-auth-orb hw-auth-orb-two" aria-hidden="true" />
+    <div className="hw-auth-layout">
+      <section className="hw-auth-intro">
+        <Brand />
+        <div className="hw-auth-intro-copy">
+          <span className="hw-auth-kicker"><Sparkles size={16} />{translate("YOUR SPACE, YOUR PACE")}</span>
+          <h1>A calmer way to care for yourself.</h1>
+          <p>Bring your routines, reminders and personal notes together in one private space.</p>
+        </div>
+        <div className="hw-auth-promise"><LockKeyhole size={18} /><span>Private by default. Always in your control.</span></div>
+      </section>
+
+      <section className="hw-auth-card" aria-labelledby="auth-title">
+        <div className="hw-auth-mobile-brand"><Brand /></div>
+        {notice && <p role="status" className="hw-auth-message is-success">{notice}</p>}
+        <div className="hw-auth-heading">
+          <span className="hw-auth-kicker"><Sparkles size={15} />{translate("A LITTLE SPACE FOR YOU")}</span>
+          <h2 id="auth-title">{translate(heading)}</h2>
+          <p>{translate("Your plans, reminders and reflections — all together, and just for you.")}</p>
+        </div>
+
+        {(mode === "login" || mode === "register") && <div className="hw-auth-tabs" role="tablist" aria-label="Account options">
+          {tabs.map(([key, text]) => <button
+            key={key}
+            id={`auth-tab-${key}`}
+            type="button"
+            role="tab"
+            aria-selected={mode === key}
+            onClick={() => { setMode(key); setError(""); setMessage(""); }}
+          >{translate(text)}</button>)}
+        </div>}
+
+        <form className="hw-auth-form" onSubmit={submit}>
+          {mode === "register" && <label className="hw-auth-label">{translate("Your name")}
+            <input className="hw-auth-input" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={60} />
+          </label>}
+          {mode !== "reset" && <label className="hw-auth-label">{translate("Email address")}
+            <input className="hw-auth-input" type="email" inputMode="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          </label>}
+          {["login", "register", "reset"].includes(mode) && <label className="hw-auth-label">{translate(mode === "reset" ? "New password" : "Password")}
+            <input className="hw-auth-input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={72} required />
+          </label>}
+          {message && <p role="status" className="hw-auth-message is-success">{message}</p>}
+          {error && <p role="alert" className="hw-auth-message is-error">{error}</p>}
+          <button disabled={busy} className="hw-auth-submit">
+            {busy ? translate("One moment…") : translate(mode === "login" ? "Come on in" : mode === "register" ? "Create my space" : mode === "forgot" ? "Send reset link" : "Save new password")}
+            <ArrowRight size={18} />
+          </button>
+        </form>
+
+        <div className="hw-auth-links">
+          {(mode === "login" || mode === "forgot") && <button onClick={() => { setMode(mode === "forgot" ? "login" : "forgot"); setError(""); }}>{translate(mode === "forgot" ? "Back to sign in" : "Forgot your password?")}</button>}
+          {mode === "login" && <button onClick={resendVerification}>{translate("Resend verification")}</button>}
+        </div>
+        <p className="hw-auth-private"><LockKeyhole size={15} />{translate("Your wellness space is private by default.")}</p>
+      </section>
+    </div>
   </main>;
 }
