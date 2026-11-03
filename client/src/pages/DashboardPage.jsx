@@ -1,43 +1,244 @@
 import { useState } from "react";
-import { ArrowRight, CalendarDays, Check, Clock3, Droplets, Heart, Plus, Salad, Sparkles, Sunrise } from "lucide-react";
+import {
+  ArrowRight, CalendarDays, Check, Clock3, HeartPulse, Plus, Utensils,
+} from "lucide-react";
 import { Link } from "react-router-dom";
-import PageHeader from "../components/PageHeader.jsx";
 import RecordForm from "../components/RecordForm.jsx";
-import RecordList from "../components/RecordList.jsx";
 import { occursOn, occurrenceStatus } from "../lib/recurrence.js";
 import { localeFor, translate } from "../lib/translations.js";
 
-const today = () => new Date().toDateString();
+const actionableCategories = new Set(["routine", "meal", "reminder"]);
+const upcomingCategories = new Set(["routine", "meal", "reminder", "appointment", "followup"]);
 
-export default function DashboardPage({ user, records, onSave, onToggle, onSkip, onDelete, onShare, supporters }) {
+function isForToday(record, now) {
+  if (record.recurrence?.frequency && record.recurrence.frequency !== "none") {
+    return occursOn(record, now);
+  }
+  const date = record.scheduledAt || record.createdAt;
+  return Boolean(date && new Date(date).toDateString() === now.toDateString());
+}
+
+function greetingFor(hour) {
+  if (hour < 12) return "Good morning,";
+  if (hour < 18) return "Good afternoon,";
+  return "Good evening,";
+}
+
+function formatTime(date) {
+  return new Intl.DateTimeFormat(localeFor(), { timeStyle: "short" }).format(new Date(date));
+}
+
+function isPlanned(record, now) {
+  return occurrenceStatus(record, now) === "planned";
+}
+
+function ProgressRing({ completed, total }) {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const progress = total ? completed / total : 0;
+  return (
+    <svg className="today-progress-ring" viewBox="0 0 96 96" role="img" aria-label={`${completed} of ${total} planned items done today`}>
+      <defs>
+        <linearGradient id="today-progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="80%" stopColor="var(--color-primary-200)" />
+          <stop offset="100%" stopColor="var(--color-win-500)" />
+        </linearGradient>
+      </defs>
+      <circle className="today-progress-track" cx="48" cy="48" r={radius} />
+      {total > 0 && <circle
+        className="today-progress-value"
+        cx="48"
+        cy="48"
+        r={radius}
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - progress)}
+      />}
+      <text className="today-progress-number" x="48" y="46">{completed}</text>
+      <text className="today-progress-caption" x="48" y="61">of {total}</text>
+    </svg>
+  );
+}
+
+function IconCircle({ children, category = "routine" }) {
+  return <span className={`today-icon-circle is-${category}`} aria-hidden="true">{children}</span>;
+}
+
+function TodaySection({ title, icon: Icon, action, children, className = "" }) {
+  return (
+    <section className={`today-section ${className}`}>
+      <header className="today-section-heading">
+        <span className="today-section-title"><Icon size={20} strokeWidth={2} /><h2>{title}</h2></span>
+        {action}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function EmptySection({ children }) {
+  return <p className="today-empty-copy">{children}</p>;
+}
+
+function MealPhoto({ record }) {
+  const [available, setAvailable] = useState(true);
+  if (!record.mealImageFileId || !available) {
+    return <span className="today-meal-photo-placeholder"><Utensils size={22} /></span>;
+  }
+  return <img
+    className="today-meal-photo"
+    src={`/api/documents/meals/${record._id}/image`}
+    alt=""
+    onError={() => setAvailable(false)}
+  />;
+}
+
+export default function DashboardPage({ user, records, onSave, onToggle }) {
   const [form, setForm] = useState(null);
   const now = new Date();
-  const todays = records.filter((record) => record.recurrence?.frequency && record.recurrence.frequency !== "none"
-    ? occursOn(record, new Date())
-    : new Date(record.scheduledAt || record.createdAt).toDateString() === today());
-  const upcoming = records.filter((record) => ["appointment", "reminder", "followup"].includes(record.category) && record.scheduledAt && new Date(record.scheduledAt) >= new Date(now.setHours(0, 0, 0, 0))).slice(0, 4);
-  const completed = todays.filter((record) => occurrenceStatus(record) === "completed").length;
-  const water = todays.reduce((sum, record) => sum + (record.category === "water" ? record.amountMl || 0 : 0), 0);
+  const todayRecords = records.filter((record) => isForToday(record, now));
+  const dailyItems = todayRecords.filter((record) => actionableCategories.has(record.category));
+  const routines = todayRecords.filter((record) => record.category === "routine");
+  const meals = todayRecords.filter((record) => record.category === "meal");
+  const reminders = todayRecords.filter((record) => record.category === "reminder");
+  const completed = dailyItems.filter((record) => occurrenceStatus(record, now) === "completed").length;
+  const firstName = user.name.split(" ")[0];
+  const hideAppointmentDetails = user.profile?.hideAppointmentDetailsOnDashboard !== false;
+  const dateLabel = new Intl.DateTimeFormat(localeFor(), { weekday: "long", day: "numeric", month: "long" }).format(now);
+  const appointments = records
+    .filter((record) => ["appointment", "followup"].includes(record.category)
+      && record.scheduledAt && new Date(record.scheduledAt) >= new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      && record.status !== "cancelled")
+    .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))
+    .slice(0, 2);
+  const nextItem = records
+    .filter((record) => upcomingCategories.has(record.category)
+      && record.scheduledAt && new Date(record.scheduledAt) >= now
+      && isPlanned(record, now))
+    .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))[0]
+    || routines.find((record) => isPlanned(record, now))
+    || reminders.find((record) => isPlanned(record, now));
+  const hasCheckIn = todayRecords.some((record) => record.category === "checkin");
   const openForm = (category) => setForm({ category });
 
-  return <>
-    <PageHeader eyebrow="A NEW DAY, YOUR WAY" title={`${translate("Good day,")} ${user.name.split(" ")[0]}.`} description="Take things one step at a time. You're right where you need to be." action={<button onClick={() => openForm("routine")} className="flex items-center gap-2 rounded-lg bg-[#2f5b48] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#264b39]"><Plus size={17} />{translate("Add something")}</button>} />
-    <section className="mb-6 grid gap-4 rounded-2xl border border-[#edf0e7] bg-gradient-to-r from-[#f1f5ec] via-[#f8f7ef] to-[#f4f0e8] p-5 sm:grid-cols-[1fr_auto] sm:items-center"><div><p className="text-[10px] font-bold tracking-[.14em] text-[#829087]">A GENTLE REMINDER</p><h2 className="mt-2 font-[Manrope] text-xl font-semibold text-[#344a3c]">Small steps are still steps.</h2><p className="mt-1 text-sm text-[#7e8b7e]">There's no rush to do it all. Make today your own.</p></div><div className="flex items-center gap-4"><div className="grid size-14 place-items-center rounded-full border-2 border-[#d5e0d1] text-center text-sm font-bold text-[#46694f]">{completed}<small className="block text-[9px] font-normal">done</small></div><span className="text-xs text-[#7e8b7e]">{todays.length ? "Every little thing counts." : "Your day is yours to shape."}</span></div></section>
-    <section className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <button onClick={() => openForm("water")} className="flex items-center gap-3 rounded-xl border border-[#e9ede5] bg-white p-4 text-left hover:border-[#d3dfd1]"><span className="grid size-10 place-items-center rounded-xl bg-[#eaf2f3] text-[#638995]"><Droplets size={18} /></span><span className="min-w-0 flex-1"><strong className="block text-xs text-[#46594b]">Hydration</strong><small className="mt-1 block text-[11px] text-[#919b92]">{water ? `${water} ml logged today` : "No daily target"}</small></span><Plus size={16} className="text-[#829087]" /></button>
-      <button onClick={() => openForm("meal")} className="flex items-center gap-3 rounded-xl border border-[#e9ede5] bg-white p-4 text-left hover:border-[#d3dfd1]"><span className="grid size-10 place-items-center rounded-xl bg-[#f7efe5] text-[#a77c5c]"><Salad size={18} /></span><span className="min-w-0 flex-1"><strong className="block text-xs text-[#46594b]">Meals & nutrition</strong><small className="mt-1 block text-[11px] text-[#919b92]">Plan meals and save food notes</small></span><Plus size={16} className="text-[#829087]" /></button>
-      <button onClick={() => openForm("activity")} className="flex items-center gap-3 rounded-xl border border-[#e9ede5] bg-white p-4 text-left hover:border-[#d3dfd1]"><span className="grid size-10 place-items-center rounded-xl bg-[#edf2e8] text-[#66836a]"><Heart size={18} /></span><span className="min-w-0 flex-1"><strong className="block text-xs text-[#46594b]">Movement</strong><small className="mt-1 block text-[11px] text-[#919b92]">Record movement you enjoyed</small></span><Plus size={16} className="text-[#829087]" /></button>
-      <button onClick={() => openForm("checkin")} className="flex items-center gap-3 rounded-xl border border-[#e9ede5] bg-white p-4 text-left hover:border-[#d3dfd1]"><span className="grid size-10 place-items-center rounded-xl bg-[#efeff5] text-[#797898]"><Sparkles size={18} /></span><span className="min-w-0 flex-1"><strong className="block text-xs text-[#46594b]">Wellness check-in</strong><small className="mt-1 block text-[11px] text-[#919b92]">Optional, private reflection</small></span><Plus size={16} className="text-[#829087]" /></button>
-    </section>
-    <div className="grid gap-8 xl:grid-cols-[1.4fr_.8fr]">
-      <section><div className="mb-3 flex items-end justify-between border-b border-[#e9ece5] pb-3"><div><p className="text-[10px] font-bold tracking-[.14em] text-[#829087]">A LITTLE AT A TIME</p><h2 className="mt-1 font-[Manrope] text-lg font-semibold text-[#304337]">Your day <span className="ml-1 rounded-full bg-[#eef1eb] px-2 py-1 text-xs font-medium text-[#809083]">{todays.length}</span></h2></div><Link to="/planner" className="flex items-center gap-1 text-xs font-semibold text-[#62816a]">My planner <ArrowRight size={14} /></Link></div>
-        <RecordList records={todays.slice(0, 6)} onSave={(item) => setForm(item)} onToggle={onToggle} onSkip={onSkip} onDelete={onDelete} onShare={onShare} supporters={supporters} emptyTitle="A little room to begin." emptyText="Add a routine, a meal, or anything you'd like to remember." emptyAction={() => openForm("routine")} />
+  return (
+    <div className="today-page">
+      <header className="today-greeting">
+        <div>
+          <p className="today-date">{dateLabel}</p>
+          <h1>{translate(greetingFor(now.getHours()))} {firstName}.</h1>
+          <p className="today-greeting-subtitle">
+            {dailyItems.length ? translate("One step at a time. You're doing well.") : translate("A calm day ahead. Make it your own.")}
+          </p>
+        </div>
+      </header>
+
+      <section className="today-hero" aria-labelledby="today-progress-title">
+        <div className="today-hero-copy">
+          <p className="today-eyebrow">{translate("YOUR DAY, AT A GLANCE")}</p>
+          <h2 id="today-progress-title">
+            {dailyItems.length > 0 && completed === dailyItems.length
+              ? translate("Strong day")
+              : `${completed} ${translate("of")} ${dailyItems.length} ${translate("done today")}`}
+          </h2>
+          <p>{dailyItems.length ? translate("Every small step counts.") : translate("Start with one small win.")}</p>
+          <div className="today-progress-chips" aria-label="Today's progress by category">
+            <span>{translate("Routines")} {routines.filter((item) => occurrenceStatus(item, now) === "completed").length}/{routines.length}</span>
+            <span>{translate("Meals")} {meals.filter((item) => occurrenceStatus(item, now) === "completed").length}/{meals.length}</span>
+            <span>{translate("Reminders")} {reminders.filter((item) => occurrenceStatus(item, now) === "completed").length}/{reminders.length}</span>
+          </div>
+        </div>
+        <ProgressRing completed={completed} total={dailyItems.length} />
+        <button className="today-energy-button" onClick={() => openForm("routine")}>
+          <Plus size={18} />{translate(!dailyItems.length || completed === dailyItems.length ? "Add something" : "Keep going")}
+        </button>
       </section>
-      <section><div className="mb-3 flex items-end justify-between border-b border-[#e9ece5] pb-3"><div><p className="text-[10px] font-bold tracking-[.14em] text-[#829087]">LOOKING AHEAD</p><h2 className="mt-1 font-[Manrope] text-lg font-semibold text-[#304337]">Coming up</h2></div><Link to="/calendar" className="flex items-center gap-1 text-xs font-semibold text-[#62816a]">Calendar <ArrowRight size={14} /></Link></div>
-        {upcoming.length ? <div className="rounded-2xl border border-[#e9ede5] bg-white px-4">{upcoming.map((item) => <div key={item._id} className="flex gap-3 border-b border-[#edf0e9] py-4 last:border-0"><span className="grid size-9 place-items-center rounded-xl bg-[#eeedf5] text-[#797898]"><CalendarDays size={17} /></span><span className="min-w-0 flex-1"><strong className="block truncate text-xs text-[#46594b]">{item.title}</strong><small className="mt-1 flex items-center gap-1 text-[10px] text-[#8d9990]"><Clock3 size={12} />{new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.scheduledAt))}</small></span></div>)}</div> : <div className="rounded-2xl border border-[#e9ede5] bg-white p-6 text-sm text-[#8a958c]">No upcoming reminders or appointments.</div>}
-        <div className="mt-4 grid grid-cols-2 gap-3"><Link to="/meals" className="rounded-xl border border-[#e9ede5] bg-white p-4 text-xs font-semibold text-[#52665a]"><Salad className="mb-2 text-[#a77c5c]" size={17} />Meals</Link><Link to="/wellness" className="rounded-xl border border-[#e9ede5] bg-white p-4 text-xs font-semibold text-[#52665a]"><Check className="mb-2 text-[#66836a]" size={17} />Wellness</Link></div>
-      </section>
+
+      {nextItem && <section className={`today-next-card${["appointment", "followup"].includes(nextItem.category) ? " is-warm" : ""}`}>
+        <IconCircle category={nextItem.category}>
+          {nextItem.category === "meal" ? <Utensils size={20} /> : nextItem.category === "appointment" || nextItem.category === "followup" ? <CalendarDays size={20} /> : <Clock3 size={20} />}
+        </IconCircle>
+        <div className="today-next-copy">
+          <p className="today-eyebrow">{translate("NEXT UP")}</p>
+          <h2>{["appointment", "followup"].includes(nextItem.category) && hideAppointmentDetails
+            ? translate(nextItem.category === "appointment" ? "Appointment" : "Follow-up")
+            : nextItem.title}</h2>
+          <p>{nextItem.scheduledAt ? formatTime(nextItem.scheduledAt) : translate("Still open")}</p>
+        </div>
+        {actionableCategories.has(nextItem.category)
+          ? <button className="today-small-action" onClick={() => onToggle(nextItem)}>{translate("Mark done")}</button>
+          : <Link className="today-small-action" to={nextItem.category === "appointment" ? "/healthcare" : "/calendar"}>{translate("View")}</Link>}
+      </section>}
+
+      {dailyItems.length === 0 ? <section className="today-first-day">
+        <h2>{translate("Let's set up your first day")}</h2>
+        <p>{translate("Choose one small thing to plan. You can change it anytime.")}</p>
+        <div>
+          <button onClick={() => openForm("routine")}><Plus size={18} />{translate("Add a routine")}</button>
+          <button onClick={() => openForm("meal")}><Plus size={18} />{translate("Add a meal")}</button>
+          <button onClick={() => openForm("reminder")}><Plus size={18} />{translate("Add a reminder")}</button>
+        </div>
+      </section> : <div className="today-columns">
+        <div className="today-column">
+          <TodaySection title={translate("Today's routine")} icon={Check} action={<Link to="/planner" className="today-text-link">{translate("See all")}<ArrowRight size={16} /></Link>}>
+            {routines.length ? <div className="today-list-card">
+              {routines.slice(0, 4).map((record) => {
+                const done = occurrenceStatus(record, now) === "completed";
+                return <div className={`today-routine-row${done ? " is-done" : ""}`} key={record._id}>
+                  <button className="today-check" aria-label={translate(done ? "Mark as not done" : "Mark as done")} aria-pressed={done} onClick={() => onToggle(record)}>
+                    {done && <Check size={16} />}
+                  </button>
+                  <span className="today-routine-name">{record.title}</span>
+                  {record.scheduledAt && <time>{formatTime(record.scheduledAt)}</time>}
+                </div>;
+              })}
+            </div> : <EmptySection>{translate("Start with one small win.")}</EmptySection>}
+          </TodaySection>
+
+          <TodaySection title={translate("Today's meals")} icon={Utensils} action={<Link to="/meals" className="today-text-link">{translate("See all")}<ArrowRight size={16} /></Link>}>
+            {meals.length ? <div className="today-meal-list">
+              {meals.slice(0, 4).map((meal) => <Link className="today-meal-card" to="/meals" key={meal._id}>
+                <MealPhoto record={meal} />
+                <span className="today-meal-type">{translate(meal.mealType || "Meal")}</span>
+                <strong>{meal.title}</strong>
+                <span className="today-meal-state">{translate(occurrenceStatus(meal, now) === "completed" ? "Logged" : "Planned")}</span>
+              </Link>)}
+            </div> : <EmptySection>{translate("Add a meal when it helps you plan your day.")}</EmptySection>}
+          </TodaySection>
+        </div>
+
+        <div className="today-column">
+          <TodaySection title={translate("Reminders")} icon={Clock3} action={<Link to="/reminders" className="today-text-link">{translate("See all")}<ArrowRight size={16} /></Link>}>
+            {reminders.filter((item) => isPlanned(item, now)).length
+              ? <div className="today-list-card">
+                {reminders.filter((item) => isPlanned(item, now)).slice(0, 3).map((reminder) => <div className="today-reminder-row" key={reminder._id}>
+                  <IconCircle category="reminder"><Clock3 size={18} /></IconCircle>
+                  <span className="today-reminder-copy"><strong>{reminder.title}</strong><small>{reminder.scheduledAt ? formatTime(reminder.scheduledAt) : translate("Still open")}</small></span>
+                  <button className="today-check" aria-label={translate("Mark as done")} onClick={() => onToggle(reminder)}><Check size={16} /></button>
+                </div>)}
+              </div> : <EmptySection>{translate("You're all caught up.")}</EmptySection>}
+          </TodaySection>
+
+          {!hasCheckIn && <section className="today-checkin-card">
+            <IconCircle category="wellness"><HeartPulse size={20} /></IconCircle>
+            <div><h2>{translate("How are you feeling today?")}</h2><p>{translate("A check-in is optional. Add one whenever useful.")}</p></div>
+            <button className="today-secondary-button" onClick={() => openForm("checkin")}>{translate("Quick check-in")}</button>
+          </section>}
+
+          <TodaySection title={translate("Upcoming appointments")} icon={CalendarDays} action={<Link to="/healthcare" className="today-text-link">{translate("See all")}<ArrowRight size={16} /></Link>}>
+            {appointments.length ? <div className="today-list-card">
+              {appointments.map((appointment) => <div className="today-appointment-row" key={appointment._id}>
+                <time dateTime={appointment.scheduledAt}>
+                  <strong>{new Intl.DateTimeFormat(localeFor(), { day: "numeric" }).format(new Date(appointment.scheduledAt))}</strong>
+                  <span>{new Intl.DateTimeFormat(localeFor(), { month: "short" }).format(new Date(appointment.scheduledAt))}</span>
+                </time>
+                <span><strong>{hideAppointmentDetails ? translate(appointment.category === "appointment" ? "Appointment" : "Follow-up") : appointment.title}</strong><small>{formatTime(appointment.scheduledAt)}</small></span>
+              </div>)}
+            </div> : <EmptySection>{translate("No upcoming appointments.")}</EmptySection>}
+          </TodaySection>
+        </div>
+      </div>}
+
+      {form && <RecordForm initial={form} records={records} onClose={() => setForm(null)} onSave={onSave} />}
     </div>
-    {form && <RecordForm initial={form} records={records} onClose={() => setForm(null)} onSave={onSave} />}
-  </>;
+  );
 }

@@ -23,7 +23,7 @@ const checkInOptions = {
   appetite: ["less", "usual", "more"],
   digestion: ["noticeable", "okay", "comfortable"],
 };
-const profileFields = ["dateOfBirth", "phone", "timeZone", "language", "theme", "quietHoursStart", "quietHoursEnd", "notificationsEnabled"];
+const profileFields = ["dateOfBirth", "phone", "timeZone", "language", "theme", "quietHoursStart", "quietHoursEnd", "notificationsEnabled", "hideAppointmentDetailsOnDashboard"];
 
 async function writeResponseChunk(res, chunk) {
   if (res.write(chunk)) return;
@@ -272,8 +272,8 @@ authRouter.patch("/profile", requireAuth, async (req, res, next) => {
     for (const field of profileFields) {
       if (req.body[field] === undefined) continue;
       const value = req.body[field];
-      if (field === "notificationsEnabled") {
-        if (typeof value !== "boolean") return res.status(400).json({ message: "Choose whether notifications are enabled." });
+      if (field === "notificationsEnabled" || field === "hideAppointmentDetailsOnDashboard") {
+        if (typeof value !== "boolean") return res.status(400).json({ message: `Choose whether ${field === "notificationsEnabled" ? "notifications" : "appointment details"} are hidden or enabled.` });
         updates[`profile.${field}`] = value;
       } else if (field === "dateOfBirth") {
         if (value !== "" && value !== null && (typeof value !== "string" || Number.isNaN(Date.parse(value)) || new Date(value) > new Date())) return res.status(400).json({ message: "Choose a valid date of birth." });

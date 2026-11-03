@@ -4,8 +4,8 @@
   "description": "A private, supportive space for your everyday care.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAF7F0",
-  "theme_color": "#4F7360",
+  "background_color": "#F4F7FA",
+  "theme_color": "#0E7C7B",
   "orientation": "portrait",
   "icons": [
     {

@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
     quietHoursStart: { type: String, default: "" },
     quietHoursEnd: { type: String, default: "" },
     notificationsEnabled: { type: Boolean, default: true },
+    hideAppointmentDetailsOnDashboard: { type: Boolean, default: true },
   },
 }, { timestamps: true });
 
