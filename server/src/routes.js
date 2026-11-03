@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { createHash, randomBytes } from "node:crypto";
 import { User, Record, AuthToken, MedicalDocument, Notification, SupporterAccess, PushSubscription } from "./models.js";
-import { cookieOptions, requireAuth } from "./auth.js";
-import { sendAccountEmail } from "./email.js";
+import { cookieOptions, optionalAuth, requireAuth } from "./auth.js";
+import { sendAccountEmail, sendVerificationEmail } from "./email.js";
 import { isOccurrenceDate, isValidDateKey } from "./recurrence.js";
 import { getBucket } from "./documents.js";
 
@@ -83,6 +83,10 @@ async function sendActionEmail(user, purpose, rawToken) {
   const link = new URL("/", process.env.APP_ORIGIN || "http://localhost:5173");
   const queryKey = { "verify-email": "verifyEmail", "reset-password": "resetPassword", "change-email": "changeEmail" }[purpose];
   link.searchParams.set(queryKey, rawToken);
+  if (purpose === "verify-email") {
+    await sendVerificationEmail({ to: user.email, link: link.href });
+    return;
+  }
   const description = { "verify-email": "verify your email address", "reset-password": "reset your password", "change-email": "confirm your new email address" }[purpose];
   await sendAccountEmail({
     to: purpose === "change-email" ? user.pendingEmail : user.email,
@@ -105,11 +109,16 @@ authRouter.post("/register", async (req, res, next) => {
     try {
       await sendActionEmail(user, "verify-email", token);
     } catch (error) {
-      await AuthToken.deleteMany({ user: user._id });
-      await User.deleteOne({ _id: user._id });
-      return next(error);
+      await AuthToken.deleteOne({ user: user._id, purpose: "verify-email", tokenHash: hashToken(token) });
+      console.error("Verification email delivery failed:", error.message);
+      return res.status(201).json({
+        message: "Your account was created, but the verification message could not be delivered. Use Resend verification on the sign-in screen to try again.",
+      });
     }
-    return res.status(201).json({ message: "Check your email for a verification link before signing in." });
+    const message = process.env.NODE_ENV === "development"
+      ? "Your account was created. Open the verification link printed in the backend terminal before signing in."
+      : "Check your email for a verification link before signing in.";
+    return res.status(201).json({ message });
   } catch (error) {
     if (error.code === 11000) return res.status(409).json({ message: "An account with that email already exists." });
     return next(error);
@@ -147,7 +156,12 @@ authRouter.post("/resend-verification", async (req, res, next) => {
     const user = await User.findOne({ email });
     if (user && !user.emailVerifiedAt) {
       const token = await createEmailToken(user, "verify-email");
-      await sendActionEmail(user, "verify-email", token);
+      try {
+        await sendActionEmail(user, "verify-email", token);
+      } catch (error) {
+        await AuthToken.deleteOne({ user: user._id, purpose: "verify-email", tokenHash: hashToken(token) });
+        return next(error);
+      }
     }
     return res.json({ message: "If that account needs verification, an email has been sent." });
   } catch (error) { return next(error); }
@@ -238,8 +252,9 @@ authRouter.post("/logout", async (req, res, next) => {
   return res.json({ message: "Signed out." });
 });
 
-authRouter.get("/me", requireAuth, async (req, res, next) => {
+authRouter.get("/me", optionalAuth, async (req, res, next) => {
   try {
+    if (!req.userId) return res.json({ user: null });
     const user = await User.findById(req.userId).select("name email profile emailVerifiedAt");
     if (!user) return res.status(401).json({ message: "Please sign in to continue." });
     if (!user.emailVerifiedAt) return res.status(403).json({ message: "Please verify your email before signing in." });

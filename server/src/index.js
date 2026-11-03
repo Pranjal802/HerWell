@@ -22,10 +22,18 @@ if (process.env.JWT_SECRET.length < 32) {
 
 const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", "loopback");
 app.use(helmet());
 app.use(express.json({ limit: "16kb" }));
 app.use(cookieParser());
-app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: "draft-7", legacyHeaders: false }));
+app.use("/api/auth", rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: process.env.NODE_ENV === "development" ? 100 : 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  skip: (req) => req.path === "/me",
+}));
 app.use("/api/auth", authRouter);
 app.use("/api/records", recordsRouter);
 app.use("/api/documents", documentsRouter);

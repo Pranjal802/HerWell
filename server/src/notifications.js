@@ -11,8 +11,15 @@ notificationsRouter.use(requireAuth);
 const publicKey = process.env.VAPID_PUBLIC_KEY || "";
 const privateKey = process.env.VAPID_PRIVATE_KEY || "";
 const vapidSubject = process.env.VAPID_SUBJECT || "";
-const pushConfigured = Boolean(publicKey && privateKey && vapidSubject);
-if (pushConfigured) webpush.setVapidDetails(vapidSubject, publicKey, privateKey);
+let pushConfigured = false;
+if (publicKey && privateKey && vapidSubject) {
+  try {
+    webpush.setVapidDetails(vapidSubject, publicKey, privateKey);
+    pushConfigured = true;
+  } catch {
+    console.error("Web Push is disabled because the VAPID configuration is invalid. Generate a valid key pair and update server/.env.");
+  }
+}
 
 notificationsRouter.get("/push/config", (_req, res) => res.json({ enabled: pushConfigured, publicKey: pushConfigured ? publicKey : null }));
 

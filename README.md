@@ -8,8 +8,8 @@ Requirements: Node.js 20+, npm, a MongoDB database, and SMTP credentials for acc
 
 1. Copy `server/.env.example` to `server/.env`.
 2. Set `MONGODB_URI` to your MongoDB connection string and set `JWT_SECRET` to a unique random value of at least 32 characters.
-3. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`. Set `APP_ORIGIN` to the client origin users should use.
-4. To enable background browser push, generate an application-server key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in `server/.env`. Without VAPID settings, reminders still appear in the app while it is open.
+3. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, and `SMTP_FROM`. Set `APP_ORIGIN` to the client origin users should use. In development, verification links are printed in the backend terminal and can be opened manually. In production, verification emails are sent through SMTP. Resend's unverified testing mode only permits sending to its verified test recipient; verify a sending domain and use an address on that domain in `SMTP_FROM` to deliver verification emails to other users.
+4. To enable background browser push, generate an application-server key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in `server/.env`. Without valid VAPID settings, reminders still appear in the app while it is open and the API starts with background push disabled.
 5. From the project root, run `npm install`, then `npm run dev`.
 6. Open the Vite URL shown in the terminal.
 

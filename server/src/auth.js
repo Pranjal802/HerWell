@@ -27,3 +27,8 @@ export async function requireAuth(req, res, next) {
     return next();
   } catch (error) { return next(error); }
 }
+
+export function optionalAuth(req, res, next) {
+  if (!req.cookies?.herwell_session) return next();
+  return requireAuth(req, res, next);
+}
