@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = (import.meta.env.VITE_API_URL || import.meta.env.API_URL || "").replace(/\/+$/, "");
 
 export async function api(path, options = {}) {
   const isFormData = options.body instanceof FormData;

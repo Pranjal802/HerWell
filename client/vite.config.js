@@ -4,6 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  envPrefix: ["VITE_", "API_"],
+  define: {
+    "import.meta.env.API_URL": JSON.stringify(process.env.API_URL || process.env.VITE_API_URL || ""),
+    "import.meta.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL || process.env.API_URL || ""),
+  },
   plugins: [
     react(),
     tailwindcss(),
