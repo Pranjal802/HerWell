@@ -1,4 +1,7 @@
 let rawApi = (import.meta.env.VITE_API_URL || import.meta.env.API_URL || "").trim().replace(/\/+$/, "");
+if (!rawApi && typeof window !== "undefined" && window.location.hostname !== "localhost") {
+  rawApi = "https://herwell-production.up.railway.app";
+}
 if (rawApi && !rawApi.startsWith("http://") && !rawApi.startsWith("https://") && !rawApi.startsWith("/")) {
   rawApi = `https://${rawApi}`;
 }

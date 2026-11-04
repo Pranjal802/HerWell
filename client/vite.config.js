@@ -3,12 +3,21 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
-  envPrefix: ["VITE_", "API_"],
-  define: {
-    "import.meta.env.API_URL": JSON.stringify(process.env.API_URL || process.env.VITE_API_URL || ""),
-    "import.meta.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL || process.env.API_URL || ""),
-  },
+export default defineConfig(({ mode }) => {
+  let resolvedApi = (process.env.API_URL || process.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
+  if (!resolvedApi && mode === "production") {
+    resolvedApi = "https://herwell-production.up.railway.app";
+  }
+  if (resolvedApi && !resolvedApi.startsWith("http://") && !resolvedApi.startsWith("https://") && !resolvedApi.startsWith("/")) {
+    resolvedApi = `https://${resolvedApi}`;
+  }
+
+  return {
+    envPrefix: ["VITE_", "API_"],
+    define: {
+      "import.meta.env.API_URL": JSON.stringify(resolvedApi),
+      "import.meta.env.VITE_API_URL": JSON.stringify(resolvedApi),
+    },
   plugins: [
     react(),
     tailwindcss(),
@@ -126,9 +135,10 @@ export default defineConfig({
       },
     }),
   ],
-  server: {
-    proxy: {
-      "/api": "http://localhost:5000",
+    server: {
+      proxy: {
+        "/api": "http://localhost:5000",
+      },
     },
-  },
+  };
 });
