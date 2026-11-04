@@ -8,6 +8,7 @@ import { authRouter, recordsRouter } from "./routes.js";
 import { documentsRouter } from "./documents.js";
 import { supportersRouter } from "./supporters.js";
 import { notificationsRouter, startNotificationScheduler } from "./notifications.js";
+import { aiRouter } from "./ai.routes.js";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
@@ -24,6 +25,20 @@ const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", "loopback");
 app.use(helmet());
+app.use((req, res, next) => {
+  const allowedOrigin = process.env.APP_ORIGIN || "http://localhost:5173";
+  const origin = req.headers.origin;
+  if (origin && (origin === allowedOrigin || process.env.NODE_ENV === "development")) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  }
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json({ limit: "16kb" }));
 app.use(cookieParser());
 app.use("/api/auth", rateLimit({
@@ -39,6 +54,7 @@ app.use("/api/records", recordsRouter);
 app.use("/api/documents", documentsRouter);
 app.use("/api/supporters", supportersRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/ai", aiRouter);
 app.get("/api/health", (_req, res) => res.json({ status: mongoose.connection.readyState === 1 ? "ok" : "starting" }));
 app.use((error, _req, res, _next) => {
   console.error("Request failed:", error.message);

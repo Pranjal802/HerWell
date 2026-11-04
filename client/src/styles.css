@@ -448,3 +448,1019 @@ html[data-theme="dark"] .today-icon-circle.is-wellness { background: #32254D; co
   .today-progress-caption { font-size: 10px; }
   .today-checkin-card .today-secondary-button { width: 100%; }
 }
+
+/* ==========================================================================
+   HerWell AI Assistant Styles
+   ========================================================================== */
+
+.hw-ai-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.hw-ai-page-body {
+  width: 100%;
+}
+
+.hw-ai-container {
+  display: flex;
+  flex-direction: column;
+  height: min(78vh, 760px);
+  min-height: 480px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 20px rgba(7, 64, 63, 0.05);
+  overflow: hidden;
+}
+
+.hw-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 95%, var(--color-primary-100));
+}
+
+.hw-ai-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hw-ai-icon-badge {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--color-primary-600);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(14, 124, 123, 0.25);
+}
+
+.hw-ai-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.hw-ai-subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-primary-700);
+  font-weight: 500;
+}
+
+.hw-ai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-ai-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 140ms var(--motion-ease);
+}
+
+.hw-ai-action-btn:hover {
+  background: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.hw-ai-confirm-clear {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hw-ai-confirm-text {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.hw-ai-clear-confirm-btn {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-error);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.hw-ai-clear-cancel-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.hw-ai-disclaimer-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--color-primary-100);
+  border-bottom: 1px solid var(--color-primary-200);
+  color: var(--color-primary-800);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.hw-ai-shield-icon {
+  flex-shrink: 0;
+  color: var(--color-primary-700);
+}
+
+.hw-ai-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--color-bg);
+}
+
+.hw-ai-loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.hw-ai-welcome-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.hw-ai-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  flex-shrink: 0;
+}
+
+.hw-ai-avatar-message {
+  margin-top: 4px;
+}
+
+.hw-ai-welcome-text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.hw-ai-message-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  animation: hw-fade-in 180ms var(--motion-ease);
+}
+
+.hw-ai-message-row.is-user {
+  justify-content: flex-end;
+}
+
+.hw-ai-message-row.is-ai {
+  justify-content: flex-start;
+}
+
+.hw-ai-bubble {
+  position: relative;
+  max-width: min(84%, 600px);
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.hw-ai-bubble-user {
+  background: var(--color-primary-600);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px rgba(14, 124, 123, 0.2);
+}
+
+.hw-ai-bubble-user strong {
+  color: #ffffff;
+}
+
+.hw-ai-bubble-ai {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.hw-ai-bubble-user .hw-ai-time {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+}
+
+.hw-ai-bubble-ai .hw-ai-time {
+  color: var(--color-text-muted);
+}
+
+.hw-ai-time {
+  display: block;
+  font-size: 0.6875rem;
+  margin-top: 6px;
+}
+
+.hw-ai-formatted {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hw-ai-paragraph {
+  margin: 0;
+}
+
+.hw-ai-list {
+  margin: 4px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style-type: disc;
+}
+
+.hw-ai-list-ordered {
+  list-style-type: decimal;
+}
+
+.hw-ai-thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+}
+
+.hw-ai-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary-600);
+  animation: hw-pulse-dot 1.2s infinite ease-in-out;
+}
+
+.hw-ai-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.hw-ai-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.hw-ai-thinking-text {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin-left: 6px;
+}
+
+.hw-ai-error-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+  font-size: 0.875rem;
+}
+
+.hw-ai-error-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-ai-retry-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-error);
+  background: var(--color-surface);
+  color: var(--color-error);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.hw-ai-retry-btn:hover {
+  background: var(--color-error);
+  color: #ffffff;
+}
+
+.hw-ai-suggestions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.hw-ai-suggestions-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hw-ai-suggestions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hw-ai-suggestion-chip {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--color-primary-200);
+  background: var(--color-surface);
+  color: var(--color-primary-700);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 140ms var(--motion-ease);
+}
+
+.hw-ai-suggestion-chip:hover {
+  background: var(--color-primary-100);
+  border-color: var(--color-primary-600);
+  transform: translateY(-1px);
+}
+
+.hw-ai-footer-input {
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hw-ai-input-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 8px 10px;
+  background: var(--color-bg);
+  transition: border-color 140ms ease;
+}
+
+.hw-ai-input-form:focus-within {
+  border-color: var(--color-primary-600);
+  outline: 2px solid var(--color-primary-100);
+}
+
+.hw-ai-textarea {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  resize: none;
+  max-height: 120px;
+  padding: 4px;
+}
+
+.hw-ai-textarea:focus {
+  outline: none;
+}
+
+.hw-ai-send-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-primary-600);
+  color: #ffffff;
+  flex-shrink: 0;
+  transition: all 140ms var(--motion-ease);
+}
+
+.hw-ai-send-btn:hover:not(:disabled) {
+  background: var(--color-primary-700);
+  transform: scale(1.04);
+}
+
+.hw-ai-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hw-ai-footer-notes {
+  display: flex;
+  justify-content: space-between;
+  padding-inline: 4px;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+/* Floating AI assistant button */
+.hw-ai-floating-fab {
+  position: fixed;
+  inset-inline-end: 20px;
+  inset-block-end: calc(148px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-primary-500);
+  color: var(--color-primary-700);
+  box-shadow: 0 4px 14px rgba(7, 64, 63, 0.15);
+  transition: transform 140ms var(--motion-ease), background 140ms var(--motion-ease);
+  text-decoration: none;
+}
+
+.hw-ai-floating-fab:hover {
+  background: var(--color-primary-100);
+  transform: translateY(-2px);
+  color: var(--color-primary-800);
+}
+
+.hw-topbar-ai-btn {
+  color: var(--color-primary-600);
+}
+
+.hw-topbar-ai-btn:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-800);
+}
+
+@keyframes hw-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hw-pulse-dot {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+html[data-theme="dark"] .hw-ai-container {
+  background: #112829;
+  border-color: #1a4445;
+}
+
+html[data-theme="dark"] .hw-ai-header {
+  background: #0d2122;
+  border-bottom-color: #1a4445;
+}
+
+html[data-theme="dark"] .hw-ai-disclaimer-banner {
+  background: #143536;
+  border-bottom-color: #1a4445;
+  color: #bfe9e7;
+}
+
+html[data-theme="dark"] .hw-ai-messages-area {
+  background: #091718;
+}
+
+html[data-theme="dark"] .hw-ai-welcome-card {
+  background: #112829;
+  border-color: #1a4445;
+}
+
+html[data-theme="dark"] .hw-ai-bubble-ai {
+  background: #112829;
+  border-color: #1a4445;
+  color: #e9eef4;
+}
+
+html[data-theme="dark"] .hw-ai-suggestion-chip {
+  background: #112829;
+  border-color: #1a4445;
+  color: #bfe9e7;
+}
+
+html[data-theme="dark"] .hw-ai-suggestion-chip:hover {
+  background: #143536;
+}
+
+html[data-theme="dark"] .hw-ai-footer-input {
+  background: #112829;
+  border-top-color: #1a4445;
+}
+
+html[data-theme="dark"] .hw-ai-input-form {
+  background: #091718;
+  border-color: #1a4445;
+}
+
+html[data-theme="dark"] .hw-ai-floating-fab {
+  background: #112829;
+  border-color: #14a09e;
+  color: #bfe9e7;
+}
+
+
+/* ==========================================================================
+   HerWell AI Modern UI Enhancements & Install Modal
+   ========================================================================== */
+
+.hw-ai-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-ai-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.hw-ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: hw-status-pulse 2s infinite ease-in-out;
+}
+
+@keyframes hw-status-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.hw-ai-message-heading {
+  margin: 6px 0 2px;
+  font-family: var(--font-manrope);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-primary-800);
+}
+
+.hw-ai-strong {
+  color: var(--color-primary-800);
+  font-weight: 700;
+}
+
+.hw-ai-bubble-user .hw-ai-strong {
+  color: #ffffff;
+}
+
+.hw-ai-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 6px 0;
+}
+
+.hw-ai-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hw-ai-bullet-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary-600);
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.hw-ai-list-text {
+  flex: 1;
+}
+
+.hw-ai-bubble-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.hw-ai-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.hw-ai-copy-btn:hover {
+  background: var(--color-surface-2);
+  color: var(--color-primary-700);
+}
+
+.hw-ai-chip-icon {
+  color: var(--color-primary-600);
+  flex-shrink: 0;
+}
+
+.hw-ai-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Install on Mobile Banner in MorePage */
+.hw-more-install-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1.5px solid var(--color-primary-200);
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-primary-100) 100%);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms var(--motion-ease), box-shadow 140ms var(--motion-ease);
+}
+
+.hw-more-install-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(10, 92, 91, 0.08);
+}
+
+.hw-more-install-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(10, 92, 91, 0.1);
+  flex-shrink: 0;
+}
+
+.hw-more-install-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hw-more-install-copy strong {
+  font-size: 0.9375rem;
+  color: var(--color-primary-800);
+}
+
+.hw-more-install-copy small {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* Install Modal Sheet */
+.hw-install-modal {
+  width: min(94%, 480px);
+  margin: auto;
+  background: var(--color-surface);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(14, 33, 61, 0.16);
+  animation: hw-fade-in 180ms var(--motion-ease);
+}
+
+.hw-install-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.hw-install-badge {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--color-primary-100);
+}
+
+.hw-install-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.hw-install-desc {
+  margin: 0 0 20px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.hw-install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.hw-install-steps-title {
+  margin: 0 0 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-primary-800);
+}
+
+.hw-install-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.hw-install-step-num {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-primary-600);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.hw-install-step-content p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.hw-install-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.hw-install-android {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hw-install-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  background: var(--color-primary-600);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.hw-install-btn:hover {
+  background: var(--color-primary-700);
+}
+
+.hw-install-subtext {
+  margin: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.hw-install-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.hw-install-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   PWA Install Card & Steps Styles
+   ========================================================================== */
+
+.hw-pwa-install-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1.5px solid var(--color-primary-200);
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-primary-100) 100%);
+  box-shadow: 0 4px 16px rgba(10, 92, 91, 0.05);
+}
+
+.hw-pwa-install-icon-wrapper {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(10, 92, 91, 0.12);
+  flex-shrink: 0;
+}
+
+.hw-pwa-install-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.hw-pwa-install-title {
+  margin: 0 0 4px;
+  font-family: var(--font-manrope);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-primary-800);
+}
+
+.hw-pwa-install-desc {
+  margin: 0 0 14px;
+  font-size: 0.84375rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.hw-pwa-install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hw-pwa-install-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--color-primary-600);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(14, 124, 123, 0.25);
+  transition: all 140ms var(--motion-ease);
+}
+
+.hw-pwa-install-btn:hover {
+  background: var(--color-primary-700);
+  transform: translateY(-1px);
+}
+
+.hw-pwa-ios-instructions {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary-200);
+  animation: hw-fade-in 140ms ease;
+}
+
+.hw-pwa-ios-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-primary-800);
+}
+
+.hw-pwa-close-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.hw-pwa-close-btn:hover {
+  background: var(--color-surface-2);
+}
+
+.hw-pwa-steps-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+html[data-theme="dark"] .hw-pwa-install-card {
+  background: #112829;
+  border-color: #1a4445;
+}
+
+html[data-theme="dark"] .hw-pwa-install-icon-wrapper {
+  background: #091718;
+}
+
+html[data-theme="dark"] .hw-pwa-install-title {
+  color: #bfe9e7;
+}
+
+html[data-theme="dark"] .hw-pwa-ios-instructions {
+  background: #091718;
+  border-color: #1a4445;
+}

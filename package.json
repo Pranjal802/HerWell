@@ -13,6 +13,7 @@
     "test": "node --test server/src/*.test.js client/src/lib/*.test.js"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.2.5",
+    "sharp": "^0.35.5"
   }
 }
