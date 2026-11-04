@@ -1,10 +1,12 @@
 import jwt from "jsonwebtoken";
 import { User } from "./models.js";
 
+const isCrossSite = process.env.COOKIE_SAMESITE === "none" || process.env.NODE_ENV === "production" || (process.env.APP_ORIGIN && !process.env.APP_ORIGIN.includes("localhost"));
+
 export const cookieOptions = {
   httpOnly: true,
-  sameSite: process.env.COOKIE_SAMESITE || (process.env.NODE_ENV === "production" ? "none" : "lax"),
-  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.COOKIE_SAMESITE || (isCrossSite ? "none" : "lax"),
+  secure: isCrossSite || process.env.NODE_ENV === "production",
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
