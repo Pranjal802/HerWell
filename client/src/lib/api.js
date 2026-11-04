@@ -14,11 +14,16 @@ export async function api(path, options = {}) {
     throw new Error("You appear to be offline. HerWell needs an internet connection for this action.");
   }
 
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("herwell_token") : null;
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
   let response;
   try {
     response = await fetch(`${API_BASE}/api${path}`, {
       credentials: "include",
-      headers: isFormData ? options.headers : { "Content-Type": "application/json", ...options.headers },
+      headers: isFormData
+        ? { ...authHeader, ...options.headers }
+        : { "Content-Type": "application/json", ...authHeader, ...options.headers },
       ...options,
       body: options.body && !isFormData ? JSON.stringify(options.body) : options.body,
     });
@@ -38,6 +43,23 @@ export async function api(path, options = {}) {
   }
 
   const data = await response.json().catch(() => ({}));
+
+  if (data?.token || data?.user?.token) {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("herwell_token", data.token || data.user.token);
+    }
+  }
+  if (response.status === 401 && path !== "/auth/me" && path !== "/auth/login") {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("herwell_token");
+    }
+  }
+  if (path === "/auth/logout") {
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("herwell_token");
+    }
+  }
+
   if (!response.ok) throw new Error(data.message || "Something went wrong. Please try again.");
   return data;
 }

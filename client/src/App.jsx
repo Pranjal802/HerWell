@@ -105,7 +105,12 @@ function Workspace({ user, setUser, notice, setNotice }) {
   }
 
   async function logout() {
-    await api("/auth/logout", { method: "POST" });
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch (_) {}
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("herwell_token");
+    }
     setUser(null);
     navigate("/");
   }

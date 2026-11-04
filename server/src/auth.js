@@ -11,8 +11,17 @@ export const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
+function extractToken(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+    const bearer = authHeader.slice(7).trim();
+    if (bearer) return bearer;
+  }
+  return req.cookies?.herwell_session || null;
+}
+
 export async function requireAuth(req, res, next) {
-  const token = req.cookies?.herwell_session;
+  const token = extractToken(req);
   if (!token) return res.status(401).json({ message: "Please sign in to continue." });
   let payload;
   try {
@@ -31,6 +40,7 @@ export async function requireAuth(req, res, next) {
 }
 
 export function optionalAuth(req, res, next) {
-  if (!req.cookies?.herwell_session) return next();
+  const token = extractToken(req);
+  if (!token) return next();
   return requireAuth(req, res, next);
 }
