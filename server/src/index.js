@@ -8,6 +8,8 @@ import { authRouter, recordsRouter } from "./routes.js";
 import { documentsRouter } from "./documents.js";
 import { supportersRouter } from "./supporters.js";
 import { notificationsRouter, startNotificationScheduler } from "./notifications.js";
+import { appOrigin } from "./config.js";
+import { createOriginGuard } from "./originGuard.js";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
@@ -24,6 +26,7 @@ const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", "loopback");
 app.use(helmet());
+app.use(createOriginGuard(new URL(appOrigin).origin));
 app.use(express.json({ limit: "16kb" }));
 app.use(cookieParser());
 app.use("/api/auth", rateLimit({

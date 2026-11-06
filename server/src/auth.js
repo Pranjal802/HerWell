@@ -1,13 +1,17 @@
 import jwt from "jsonwebtoken";
 import { User } from "./models.js";
 
-export const cookieOptions = {
-  httpOnly: true,
-  sameSite: "strict",
-  secure: process.env.NODE_ENV === "production",
-  path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-};
+export function createCookieOptions(isProduction = process.env.NODE_ENV === "production") {
+  return {
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "strict",
+    secure: isProduction,
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
+export const cookieOptions = createCookieOptions();
 
 export async function requireAuth(req, res, next) {
   const token = req.cookies?.herwell_session;

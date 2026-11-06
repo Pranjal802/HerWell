@@ -8,6 +8,7 @@ import { cookieOptions, optionalAuth, requireAuth } from "./auth.js";
 import { sendAccountEmail, sendVerificationEmail } from "./email.js";
 import { isOccurrenceDate, isValidDateKey } from "./recurrence.js";
 import { getBucket } from "./documents.js";
+import { appOrigin } from "./config.js";
 
 export const authRouter = Router();
 export const recordsRouter = Router();
@@ -80,7 +81,7 @@ async function createEmailToken(user, purpose) {
 }
 
 async function sendActionEmail(user, purpose, rawToken) {
-  const link = new URL("/", process.env.APP_ORIGIN || "http://localhost:5173");
+  const link = new URL("/", appOrigin);
   const queryKey = { "verify-email": "verifyEmail", "reset-password": "resetPassword", "change-email": "changeEmail" }[purpose];
   link.searchParams.set(queryKey, rawToken);
   if (purpose === "verify-email") {

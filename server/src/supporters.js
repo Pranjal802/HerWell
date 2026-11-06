@@ -2,6 +2,7 @@ import { Router } from "express";
 import { createHash, randomBytes } from "node:crypto";
 import { User, Record, MedicalDocument, SupporterAccess } from "./models.js";
 import { requireAuth } from "./auth.js";
+import { appOrigin } from "./config.js";
 import { sendAccountEmail } from "./email.js";
 import { isOccurrenceDate, isValidDateKey } from "./recurrence.js";
 
@@ -43,7 +44,7 @@ supportersRouter.post("/invite", async (req, res, next) => {
       inviteExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       history: [{ action: "invited" }],
     });
-    const link = new URL("/", process.env.APP_ORIGIN || "http://localhost:5173");
+    const link = new URL("/", appOrigin);
     link.searchParams.set("acceptInvite", inviteToken);
     try {
       await sendAccountEmail({
