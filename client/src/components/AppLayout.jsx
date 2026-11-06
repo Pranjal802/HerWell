@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Bell, BookOpen, CalendarDays, ChevronRight, FileText, HeartPulse, Home,
   ListChecks, LockKeyhole, LogOut, Menu, Plus, Settings, ShieldCheck,
-  Sparkles, Utensils, Users, X,
+  Share2, Sparkles, Utensils, Users, X,
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Brand from "./Brand.jsx";
@@ -27,7 +27,7 @@ const mobileNavigation = [
   { to: "/planner", label: "Plan", icon: ListChecks, matches: ["/planner", "/meals", "/reminders"] },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/wellness", label: "Care", icon: HeartPulse, matches: ["/wellness", "/healthcare", "/documents"] },
-  { to: "/more", label: "More", icon: Menu, matches: ["/more", "/journal", "/supporters", "/settings", "/ai"] },
+  { to: "/more", label: "More", icon: Menu, matches: ["/more", "/journal", "/shared", "/supporters", "/settings", "/ai"] },
 ];
 
 const sectionTabs = {
@@ -114,6 +114,7 @@ export default function AppLayout({ user, onLogout, notice, onDismissNotice, onQ
         </NavLink>)}
       </nav>
       <div className="hw-sidebar-secondary">
+        <NavLink to="/shared" className={({ isActive }) => `hw-nav-link${isActive ? " is-active" : ""}`}><Share2 size={20} /><span>{translate("Shared with me")}</span></NavLink>
         <NavLink to="/supporters" className={({ isActive }) => `hw-nav-link${isActive ? " is-active" : ""}`}><Users size={20} /><span>{translate("Supporter access")}</span></NavLink>
         <NavLink to="/settings" className={({ isActive }) => `hw-nav-link${isActive ? " is-active" : ""}`}><Settings size={20} /><span>{translate("Settings")}</span></NavLink>
       </div>
@@ -157,7 +158,7 @@ export default function AppLayout({ user, onLogout, notice, onDismissNotice, onQ
     {menuOpen && <div className="hw-mobile-drawer-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
       <nav className="hw-mobile-drawer" aria-label="More navigation">
         <header><Brand /><button className="hw-icon-button" onClick={() => setMenuOpen(false)} aria-label="Close navigation"><X size={21} /></button></header>
-        {[...navigation.slice(4, 8), { to: "/supporters", label: "Supporter access", icon: Users }, { to: "/settings", label: "Settings", icon: Settings }].map(({ to, label, icon }) =>
+        {[...navigation.slice(4, 8), { to: "/shared", label: "Shared with me", icon: Share2 }, { to: "/supporters", label: "Supporter access", icon: Users }, { to: "/settings", label: "Settings", icon: Settings }].map(({ to, label, icon }) =>
           <Link className="hw-drawer-link" to={to} key={to}><Icon icon={icon} /><span>{translate(label)}</span><ChevronRight size={18} /></Link>)}
         <button className="hw-drawer-link hw-drawer-logout" onClick={onLogout}><LogOut size={20} /><span>Sign out</span></button>
       </nav>

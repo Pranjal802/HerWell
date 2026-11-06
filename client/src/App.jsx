@@ -10,6 +10,7 @@ import RemindersPage from "./pages/RemindersPage.jsx";
 import WellnessPage from "./pages/WellnessPage.jsx";
 import JournalPage from "./pages/JournalPage.jsx";
 import DocumentsPage from "./pages/DocumentsPage.jsx";
+import SharedWithMePage from "./pages/SharedWithMePage.jsx";
 import CalendarPage from "./pages/CalendarPage.jsx";
 import SupportersPage from "./pages/SupportersPage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
@@ -127,6 +128,7 @@ function Workspace({ user, setUser, notice, setNotice }) {
         <Route path="/journal" element={<JournalPage records={records} onSave={saveRecord} onDelete={deleteRecord} onShare={shareRecord} supporters={supporters} />} />
         <Route path="/calendar" element={<CalendarPage records={records} onOccurrence={updateOccurrence} />} />
         <Route path="/documents" element={<DocumentsPage setNotice={setNotice} />} />
+        <Route path="/shared" element={<SharedWithMePage />} />
         <Route path="/supporters" element={<SupportersPage records={records} onShare={shareRecord} setNotice={setNotice} />} />
         <Route path="/settings" element={<SettingsPage user={user} setUser={setUser} setNotice={setNotice} />} />
         <Route path="/ai" element={<AiPage />} />

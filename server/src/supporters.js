@@ -241,8 +241,11 @@ supportersRouter.get("/shared/records", async (req, res, next) => {
       .map(([category]) => ({ owner: access.owner, category })));
     if (!allowed.length) return res.json({ records: [] });
     const records = await Record.find({ sharedWith: req.userId, $or: allowed }).populate("supporterUpdates.author", "name").sort({ scheduledAt: 1, createdAt: -1 }).lean();
+    const owners = await User.find({ _id: { $in: accessList.map((access) => access.owner) } }).select("name").lean();
+    const ownerNames = new Map(owners.map((owner) => [owner._id.toString(), owner.name]));
     const recordsWithPermissions = records.map((record) => ({
       ...record,
+      sharedBy: ownerNames.get(record.owner.toString()) || "Supporter",
       canAddNote: accessList.some((access) => access.owner.equals(record.owner) && access.permissions.includes("notes")),
     }));
     return res.json({ records: recordsWithPermissions });
@@ -253,8 +256,11 @@ supportersRouter.get("/shared/documents", async (req, res, next) => {
   try {
     const ownerIds = await SupporterAccess.find({ supporter: req.userId, status: "accepted", permissions: "documents" }).distinct("owner");
     const documents = await MedicalDocument.find({ owner: { $in: ownerIds }, sharedWith: req.userId })
-      .select("-owner -fileId -sharedWith -__v").sort({ documentDate: -1 }).lean();
-    return res.json({ documents });
+      .select("-fileId -sharedWith -__v").populate("owner", "name").sort({ documentDate: -1 }).lean();
+    return res.json({ documents: documents.map(({ owner, ...document }) => ({
+      ...document,
+      sharedBy: owner?.name || "Supporter",
+    })) });
   } catch (error) { return next(error); }
 });
 

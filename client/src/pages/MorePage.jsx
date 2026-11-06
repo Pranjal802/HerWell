@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, ChevronRight, FileText, HeartHandshake, LockKeyhole, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { BookOpen, ChevronRight, FileText, HeartHandshake, LockKeyhole, Share2, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader.jsx";
 import InstallPromptCard from "../components/InstallPromptCard.jsx";
@@ -9,6 +9,7 @@ const links = [
   { to: "/ai", title: "HerWell AI", detail: "Your supportive companion for habits, nutrition, and schedule questions.", icon: Sparkles },
   { to: "/journal", title: "My Journal", detail: "A private place for thoughts and reflections.", icon: BookOpen },
   { to: "/documents", title: "Documents", detail: "Your private health documents.", icon: FileText },
+  { to: "/shared", title: "Shared with me", detail: "Schedules and documents shared with you.", icon: Share2 },
   { to: "/supporters", title: "Supporter access", detail: "Choose what you share with someone you trust.", icon: Users },
   { to: "/settings", title: "Settings", detail: "Profile, preferences, and account privacy.", icon: LockKeyhole },
 ];
