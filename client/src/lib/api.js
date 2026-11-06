@@ -1,6 +1,4 @@
-let rawApi = import.meta.env.PROD
-  ? ""
-  : (import.meta.env.VITE_API_URL || import.meta.env.API_URL || "").trim().replace(/\/+$/, "");
+let rawApi = (import.meta.env.API_URL || import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
 if (rawApi && !rawApi.startsWith("http://") && !rawApi.startsWith("https://") && !rawApi.startsWith("/")) {
   rawApi = `https://${rawApi}`;
 }
