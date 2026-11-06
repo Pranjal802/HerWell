@@ -28,7 +28,8 @@ app.disable("x-powered-by");
 app.set("trust proxy", "loopback");
 app.use(helmet());
 app.use(createOriginGuard(new URL(appOrigin).origin));
-app.use(express.json({ limit: "16kb" }));
+app.use(express.json({ limit: "16kb", type: (req) => req.path !== "/api/records/import" }));
+app.use("/api/records/import", express.json({ limit: "5mb" }));
 app.use(cookieParser());
 app.use("/api/auth", rateLimit({
   windowMs: 15 * 60 * 1000,

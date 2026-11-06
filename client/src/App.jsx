@@ -38,7 +38,11 @@ function Workspace({ user, setUser, notice, setNotice }) {
   useEffect(() => {
     const refresh = () => refreshRecords().catch((error) => setNotice(error.message));
     window.addEventListener("herwell:meal-image-updated", refresh);
-    return () => window.removeEventListener("herwell:meal-image-updated", refresh);
+    window.addEventListener("herwell:records-updated", refresh);
+    return () => {
+      window.removeEventListener("herwell:meal-image-updated", refresh);
+      window.removeEventListener("herwell:records-updated", refresh);
+    };
   }, [refreshRecords, setNotice]);
   useEffect(() => {
     api("/supporters").then(({ supporters: active }) => setSupporters(active.filter((supporter) => supporter.status === "accepted"))).catch((error) => setNotice(error.message));

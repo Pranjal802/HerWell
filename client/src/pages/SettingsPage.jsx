@@ -3,6 +3,7 @@ import { Download, LockKeyhole, Save, Trash2, Upload } from "lucide-react";
 import { api } from "../lib/api.js";
 import PageHeader from "../components/PageHeader.jsx";
 import InstallPromptCard from "../components/InstallPromptCard.jsx";
+import ImportExportPanel from "../components/ImportExportPanel.jsx";
 import { translate } from "../lib/translations.js";
 
 export default function SettingsPage({ user, setUser, setNotice }) {
@@ -71,6 +72,7 @@ export default function SettingsPage({ user, setUser, setNotice }) {
     <PageHeader title="Settings" description="Your profile, preferences, and account privacy." />
     <div className="mb-6"><InstallPromptCard /></div>
     {error && <p role="alert" className="mb-4 rounded-lg bg-[#fbefed] p-3 text-sm text-[#a94841]">{error}</p>}
+    <ImportExportPanel timeZone={profile.timeZone || "UTC"} setNotice={setNotice} />
     <form onSubmit={saveProfile} className="mb-6 rounded-2xl border border-[#e9ede5] bg-white p-5"><h2 className="flex items-center gap-2 text-sm font-semibold text-[#46594b]"><LockKeyhole size={17} />Personal details and preferences</h2><div className="mt-4 grid gap-4 sm:grid-cols-2">
       <label className="text-xs font-semibold text-[#516257]">{translate("Name")}<input required maxLength={60} className={field} value={profile.name} onChange={(event) => setProfile({ ...profile, name: event.target.value })} /></label>
       <label className="text-xs font-semibold text-[#516257]">{translate("Email address")}<input disabled className={`${field} bg-[#f4f6f2]`} value={user.email} /></label>

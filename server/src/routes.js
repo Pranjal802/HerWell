@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { createHash, randomBytes } from "node:crypto";
-import { User, Record, AuthToken, MedicalDocument, Notification, SupporterAccess, PushSubscription } from "./models.js";
+import { User, Record, AuthToken, MedicalDocument, Notification, SupporterAccess, PushSubscription, ImportBackup } from "./models.js";
 import { cookieOptions, optionalAuth, requireAuth } from "./auth.js";
 import { sendAccountEmail, sendVerificationEmail } from "./email.js";
 import { isOccurrenceDate, isValidDateKey } from "./recurrence.js";
@@ -25,6 +25,23 @@ const checkInOptions = {
   digestion: ["noticeable", "okay", "comfortable"],
 };
 const profileFields = ["dateOfBirth", "phone", "timeZone", "language", "theme", "quietHoursStart", "quietHoursEnd", "notificationsEnabled", "hideAppointmentDetailsOnDashboard"];
+const importCategories = ["routine", "meal", "reminder", "checkin", "appointment", "journal"];
+const importSections = {
+  routines: "routine",
+  meals: "meal",
+  reminders: "reminder",
+  checkins: "checkin",
+  appointments: "appointment",
+  journal: "journal",
+};
+const importedFields = {
+  routine: ["title", "notes", "scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "categoryLabel", "recurrence", "reminderAt", "reminderEnabled", "status", "completed"],
+  meal: ["title", "notes", "scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "categoryLabel", "recurrence", "reminderAt", "reminderEnabled", "status", "completed", "mealType", "ingredients", "preparation", "vegetarian"],
+  reminder: ["title", "notes", "scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "categoryLabel", "recurrence", "reminderAt", "reminderEnabled", "status", "completed", "linkRecordId"],
+  checkin: ["title", "notes", "scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "categoryLabel", "recurrence", "reminderAt", "reminderEnabled", "status", "completed", "checkIn", "measurement"],
+  appointment: ["title", "notes", "scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "categoryLabel", "recurrence", "reminderAt", "reminderEnabled", "status", "completed", "appointment"],
+  journal: ["title", "notes", "scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "categoryLabel", "recurrence", "reminderAt", "reminderEnabled", "status", "completed", "journal"],
+};
 
 async function writeResponseChunk(res, chunk) {
   if (res.write(chunk)) return;
@@ -56,6 +73,90 @@ function isValidRecurrence(value) {
     && (value.startDateKey === undefined || isValidDateKey(value.startDateKey))
     && (value.endDateKey === undefined || isValidDateKey(value.endDateKey))
     && !(value.startDateKey && value.endDateKey && value.endDateKey < value.startDateKey);
+}
+
+function timezoneParts(value, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date(value));
+  return Object.fromEntries(parts.map(({ type, value: part }) => [type, part]));
+}
+
+function importDuplicateKey(record) {
+  const date = record.scheduledAt || record.startsAt;
+  const scheduledAt = date ? new Date(date).toISOString() : "";
+  return `${record.category}|${record.title.trim().toLocaleLowerCase()}|${scheduledAt}`;
+}
+
+function validateImportedRecord(record) {
+  if (!record || typeof record !== "object" || Array.isArray(record) || !importCategories.includes(record.category)) return "unknown record type";
+  if (Object.keys(record).some((key) => !["category", "_source", ...importedFields[record.category]].includes(key))) return "contains an unsupported field";
+  if (record.category === "checkin") record.title = record.title || "Daily wellness check-in";
+  if (typeof record.title !== "string" || !record.title.trim() || record.title.trim().length > 120) return "title is required and must be 120 characters or fewer";
+  if (record.notes !== undefined && (typeof record.notes !== "string" || record.notes.length > 2000)) return "notes must be 2000 characters or fewer";
+  for (const field of ["scheduledAt", "startsAt", "endsAt", "startDate", "endDate", "reminderAt"]) {
+    if (!isValidDate(record[field])) return `${field} must be a valid date`;
+  }
+  if (record.recurrence !== undefined && !isValidRecurrence(record.recurrence)) return "recurrence is invalid";
+  if (record.categoryLabel !== undefined && (typeof record.categoryLabel !== "string" || record.categoryLabel.trim().length > 60)) return "categoryLabel must be 60 characters or fewer";
+  if (record.reminderEnabled !== undefined && typeof record.reminderEnabled !== "boolean") return "reminderEnabled must be true or false";
+  if (record.completed !== undefined && typeof record.completed !== "boolean") return "completed must be true or false";
+  if (record.status !== undefined && !recordStatuses.includes(record.status)) return "status is invalid";
+  if (record.category === "meal") {
+    if (record.mealType !== undefined && !mealTypes.includes(record.mealType)) return "mealType is invalid";
+    if (record.ingredients !== undefined && (typeof record.ingredients !== "string" || record.ingredients.length > 1200)) return "ingredients are too long";
+    if (record.preparation !== undefined && (typeof record.preparation !== "string" || record.preparation.length > 2000)) return "preparation is too long";
+    if (record.vegetarian !== undefined && typeof record.vegetarian !== "boolean") return "vegetarian must be true or false";
+  }
+  if (record.category === "reminder" && record.linkRecordId !== undefined && !mongoose.isValidObjectId(record.linkRecordId)) return "linkRecordId is invalid";
+  if (record.category === "checkin") {
+    const checkIn = record.checkIn || {};
+    if (!checkIn || typeof checkIn !== "object" || Array.isArray(checkIn)
+      || (Object.keys(checkIn).length === 0 && !record.notes?.trim())
+      || Object.entries(checkIn).some(([key, value]) => !Object.hasOwn(checkInOptions, key) || !checkInOptions[key].includes(value))) return "check-in needs a valid answer or note";
+  }
+  if (record.category === "appointment") {
+    const appointment = record.appointment || {};
+    const limits = { provider: 120, location: 250, purpose: 300, clinicianInstructions: 2000 };
+    if (!appointment || typeof appointment !== "object" || Array.isArray(appointment)
+      || Object.entries(appointment).some(([key, value]) => !limits[key] || typeof value !== "string" || value.length > limits[key])) return "appointment fields are invalid";
+  }
+  if (record.category === "journal") {
+    const journal = record.journal || {};
+    if (!journal || typeof journal !== "object" || Array.isArray(journal)
+      || (journal.mood !== undefined && !["low", "okay", "good"].includes(journal.mood))
+      || (journal.tags !== undefined && (!Array.isArray(journal.tags) || journal.tags.length > 10 || journal.tags.some((tag) => typeof tag !== "string" || !tag.trim() || tag.trim().length > 30)))) return "journal fields are invalid";
+  }
+  if (record.category === "checkin" && record.measurement !== undefined) {
+    const { type, value, unit } = record.measurement || {};
+    if (typeof type !== "string" || type.length > 40 || typeof unit !== "string" || unit.length > 20
+      || typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100000) return "measurement fields are invalid";
+  }
+  return null;
+}
+
+async function scheduleImportedReminder(record, owner) {
+  if (!record.reminderAt || !record.reminderEnabled) return;
+  const occurrenceKey = record.recurrence?.startDateKey || record.reminderAt.toISOString().slice(0, 10);
+  await Notification.findOneAndUpdate(
+    { owner, record: record._id, occurrenceKey },
+    { $set: { title: record.title, scheduledAt: record.reminderAt, occurrenceAt: record.reminderAt, status: "pending", snoozedUntil: null, retryAt: null } },
+    { upsert: true, new: true, runValidators: true },
+  );
+}
+
+async function restoreImportBackup(backup) {
+  const ids = backup.importedRecordIds || [];
+  if (ids.length) {
+    await Notification.deleteMany({ owner: backup.owner, record: { $in: ids } });
+    await Record.deleteMany({ owner: backup.owner, _id: { $in: ids } });
+  }
+  if (backup.mode === "replace") {
+    if (backup.records?.length) await Record.insertMany(backup.records, { ordered: true });
+    if (backup.notifications?.length) await Notification.insertMany(backup.notifications, { ordered: true });
+  }
+  await ImportBackup.deleteOne({ _id: backup._id, owner: backup.owner });
 }
 
 function issueSession(user, res) {
@@ -398,6 +499,7 @@ authRouter.delete("/account", requireAuth, async (req, res, next) => {
       Record.updateMany({ sharedWith: user._id }, { $pull: { sharedWith: user._id } }),
       MedicalDocument.updateMany({ sharedWith: user._id }, { $pull: { sharedWith: user._id } }),
       Notification.deleteMany({ owner: user._id }),
+      ImportBackup.deleteMany({ owner: user._id }),
       MedicalDocument.deleteMany({ owner: user._id }),
       SupporterAccess.deleteMany({ $or: [{ owner: user._id }, { supporter: user._id }] }),
       PushSubscription.deleteMany({ user: user._id }),
@@ -409,6 +511,157 @@ authRouter.delete("/account", requireAuth, async (req, res, next) => {
 });
 
 recordsRouter.use(requireAuth);
+recordsRouter.get("/export", async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId).select("profile.timeZone").lean();
+    const timeZone = user?.profile?.timeZone || "UTC";
+    try { new Intl.DateTimeFormat("en", { timeZone }).format(); }
+    catch { return res.status(400).json({ message: "Set a valid time zone in Settings before exporting records." }); }
+    const records = await Record.find({ owner: req.userId, category: { $in: importCategories } }).sort({ createdAt: 1 }).lean();
+    const data = { version: 1, timezone: timeZone };
+    for (const section of Object.keys(importSections)) data[section] = [];
+    for (const record of records) {
+      const section = Object.keys(importSections).find((key) => importSections[key] === record.category);
+      const row = {};
+      for (const field of importedFields[record.category]) {
+        if (record[field] === undefined || record[field] === null) continue;
+        if (["scheduledAt", "startsAt", "endsAt", "reminderAt"].includes(field)) {
+          const parts = timezoneParts(record[field], timeZone);
+          row[field] = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+        } else if (["startDate", "endDate"].includes(field)) {
+          row[field] = new Date(record[field]).toISOString().slice(0, 10);
+        } else if (field === "recurrence") {
+          row[field] = { ...record[field], interval: record[field].interval || 1 };
+        } else row[field] = record[field];
+      }
+      data[section].push(row);
+    }
+    res.setHeader("Content-Disposition", 'attachment; filename="herwell-records.json"');
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control", "private, no-store");
+    return res.send(JSON.stringify(data));
+  } catch (error) { return next(error); }
+});
+
+recordsRouter.get("/import/undo/latest", async (req, res, next) => {
+  try {
+    const backup = await ImportBackup.findOne({ owner: req.userId, expiresAt: { $gt: new Date() } }).sort({ _id: -1 }).select("_id mode categories createdAt expiresAt").lean();
+    return res.json({ backup });
+  } catch (error) { return next(error); }
+});
+
+recordsRouter.post("/import", async (req, res, next) => {
+  try {
+    const { rows, categories, mode = "merge" } = req.body;
+    if (!Array.isArray(rows) || rows.length > 5000 || !Array.isArray(categories) || !categories.length
+      || categories.some((category) => !importCategories.includes(category))
+      || !["merge", "replace"].includes(mode)) {
+      return res.status(400).json({ message: "Choose valid record sections and an import mode." });
+    }
+
+    const skipped = [];
+    const accepted = [];
+    const seen = new Set();
+    const linkedIds = [...new Set(rows
+      .filter((row) => row?.category === "reminder" && typeof row.linkRecordId === "string" && mongoose.isValidObjectId(row.linkRecordId))
+      .map((row) => row.linkRecordId))];
+    const linkedRecords = linkedIds.length
+      ? await Record.find({ owner: req.userId, _id: { $in: linkedIds } }).select("category").lean()
+      : [];
+    const linkedCategories = new Map(linkedRecords.map((record) => [record._id.toString(), record.category]));
+    const existing = mode === "merge"
+      ? await Record.find({ owner: req.userId, category: { $in: categories } }).select("category title scheduledAt startsAt").lean()
+      : [];
+    const existingKeys = new Set(existing.map(importDuplicateKey));
+    for (const row of rows) {
+      if (!categories.includes(row?.category)) {
+        skipped.push({ source: row?._source || "row", reason: "unknown or unselected record section" });
+        continue;
+      }
+      const issue = validateImportedRecord(row);
+      if (issue) { skipped.push({ source: row?._source || "row", reason: issue }); continue; }
+      if (row.category === "reminder" && row.linkRecordId) {
+        const linkedCategory = linkedCategories.get(row.linkRecordId);
+        if (!linkedCategory || (mode === "replace" && categories.includes(linkedCategory))) {
+          skipped.push({ source: row._source || "row", reason: "linked item is unavailable or belongs to a replaced section" });
+          continue;
+        }
+      }
+      const key = importDuplicateKey(row);
+      if (seen.has(key) || existingKeys.has(key)) {
+        skipped.push({ source: row._source || "row", reason: "duplicate record" });
+        continue;
+      }
+      seen.add(key);
+      accepted.push(row);
+    }
+    const recordFilter = { owner: req.userId, category: { $in: categories } };
+    const existingRecords = await Record.find(recordFilter).lean();
+    const existingIds = existingRecords.map((record) => record._id);
+    const existingNotifications = existingIds.length
+      ? await Notification.find({ owner: req.userId, record: { $in: existingIds } }).lean()
+      : [];
+    const backup = await ImportBackup.create({
+      owner: req.userId,
+      mode,
+      categories,
+      records: existingRecords,
+      notifications: existingNotifications,
+      importedRecordIds: [],
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+
+    try {
+      if (mode === "replace") {
+        if (existingIds.length) await Notification.deleteMany({ owner: req.userId, record: { $in: existingIds } });
+        await Record.deleteMany(recordFilter);
+      }
+      const documents = accepted.map((record) => {
+        const values = { _id: new mongoose.Types.ObjectId(), owner: req.userId };
+        for (const field of importedFields[record.category]) {
+          if (record[field] !== undefined) values[field] = record[field];
+        }
+        values.category = record.category;
+        values.title = record.title.trim();
+        values.notes = record.notes?.trim() || "";
+        values.status = record.status || "planned";
+        values.recurrence = { frequency: "none", interval: 1, ...(record.recurrence || {}) };
+        const baseDate = record.scheduledAt || record.startsAt;
+        if (baseDate && !values.recurrence.startDateKey) values.recurrence.startDateKey = new Date(baseDate).toISOString().slice(0, 10);
+        if (record.category === "reminder") {
+          values.reminderAt = record.scheduledAt || record.reminderAt || null;
+          values.reminderEnabled = record.reminderEnabled ?? Boolean(values.reminderAt);
+        } else {
+          values.reminderEnabled = record.reminderEnabled ?? Boolean(record.reminderAt);
+        }
+        return values;
+      });
+      backup.importedRecordIds = documents.map((record) => record._id);
+      await backup.save();
+      const imported = documents.length ? await Record.insertMany(documents, { ordered: true }) : [];
+      for (const record of imported) await scheduleImportedReminder(record, req.userId);
+
+      const counts = Object.fromEntries(importCategories.map((category) => [category, 0]));
+      for (const record of imported) counts[record.category] += 1;
+      return res.json({ backupId: backup.id, counts, skipped, imported: imported.length });
+    } catch (error) {
+      await restoreImportBackup(backup);
+      throw error;
+    }
+  } catch (error) { return next(error); }
+});
+
+recordsRouter.post("/import/undo", async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.body.backupId)) return res.status(400).json({ message: "Choose a valid import to undo." });
+    const backup = await ImportBackup.findOne({ _id: req.body.backupId, owner: req.userId, expiresAt: { $gt: new Date() } });
+    if (!backup) return res.status(404).json({ message: "That import backup has expired or was already undone." });
+    const count = backup.importedRecordIds.length;
+    await restoreImportBackup(backup);
+    return res.json({ message: "Import undone.", removed: count });
+  } catch (error) { return next(error); }
+});
+
 recordsRouter.get("/", async (req, res, next) => {
   try {
     const filter = { owner: req.userId };
@@ -422,7 +675,7 @@ recordsRouter.get("/", async (req, res, next) => {
       if (req.query.start) filter.scheduledAt.$gte = new Date(req.query.start);
       if (req.query.end) filter.scheduledAt.$lt = new Date(req.query.end);
     }
-    const records = await Record.find(filter).populate("supporterUpdates.author", "name").sort({ scheduledAt: 1, createdAt: -1 }).limit(500).lean();
+    const records = await Record.find(filter).populate("supporterUpdates.author", "name").sort({ scheduledAt: 1, createdAt: -1 }).limit(5000).lean();
     return res.json({ records });
   } catch (error) { return next(error); }
 });

@@ -122,6 +122,16 @@ const pushSubscriptionSchema = new mongoose.Schema({
 }, { timestamps: true });
 pushSubscriptionSchema.index({ user: 1, endpoint: 1 }, { unique: true });
 
+const importBackupSchema = new mongoose.Schema({
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  mode: { type: String, enum: ["merge", "replace"], required: true },
+  categories: [{ type: String, enum: ["routine", "meal", "reminder", "checkin", "appointment", "journal"] }],
+  records: [mongoose.Schema.Types.Mixed],
+  notifications: [mongoose.Schema.Types.Mixed],
+  importedRecordIds: [{ type: mongoose.Schema.Types.ObjectId }],
+  expiresAt: { type: Date, required: true, expires: 0 },
+}, { versionKey: false });
+
 const documentSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   sharedWith: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -142,6 +152,7 @@ export const SupporterAccess = mongoose.model("SupporterAccess", supporterSchema
 export const Notification = mongoose.model("Notification", notificationSchema);
 export const MedicalDocument = mongoose.model("MedicalDocument", documentSchema);
 export const PushSubscription = mongoose.model("PushSubscription", pushSubscriptionSchema);
+export const ImportBackup = mongoose.model("ImportBackup", importBackupSchema);
 
 const aiMessageSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
