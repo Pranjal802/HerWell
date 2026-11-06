@@ -13,7 +13,7 @@ Requirements: Node.js 20+, npm, a MongoDB database, and SMTP credentials for acc
 5. From the project root, run `npm install`, then `npm run dev`.
 6. Open the Vite URL shown in the terminal.
 
-The client runs on port 5173 and proxies `/api` requests to the Express API on port 5000. The Vercel rewrite proxies production `/api` requests to Railway so the browser uses the client origin; set `VITE_API_URL` only when intentionally connecting directly to another API. Set the server's `APP_ORIGIN` to the exact public client origin (the production default is `https://her-well-snowy.vercel.app`). The API allows credentialed requests only from that origin and rejects cross-origin state-changing requests. Production sessions use secure cookies.
+The client runs on port 5173 and proxies `/api` requests to the Express API on port 5000. Production builds use the Vercel `/api` rewrite so browser requests stay on the client origin, even if a direct API URL is configured in the hosting dashboard. Set the server's `APP_ORIGIN` to the exact public client origin; Railway deployments default to `https://her-well-snowy.vercel.app` even if `NODE_ENV` is misconfigured. The API allows credentialed requests only from that origin and rejects cross-origin state-changing requests. Railway production sessions use secure cookies.
 
 ## Privacy and scope
 

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createCookieOptions } from "./auth.js";
+import { getAppOrigin } from "./config.js";
 import { createOriginGuard } from "./originGuard.js";
 
 test("production session cookies support the cross-origin client securely", () => {
@@ -10,10 +11,23 @@ test("production session cookies support the cross-origin client securely", () =
   assert.equal(options.httpOnly, true);
 });
 
+test("Railway production cookies stay secure even when NODE_ENV is development", () => {
+  const options = createCookieOptions({ NODE_ENV: "development", RAILWAY_PUBLIC_DOMAIN: "herwell-production.up.railway.app" });
+  assert.equal(options.sameSite, "none");
+  assert.equal(options.secure, true);
+});
+
 test("development session cookies remain same-site and non-secure", () => {
   const options = createCookieOptions({ NODE_ENV: "development", APP_ORIGIN: "http://localhost:5173" });
   assert.equal(options.sameSite, "lax");
   assert.equal(options.secure, false);
+});
+
+test("Railway defaults the allowed client origin to the production Vercel app", () => {
+  assert.equal(
+    getAppOrigin({ NODE_ENV: "development", RAILWAY_PUBLIC_DOMAIN: "herwell-production.up.railway.app" }),
+    "https://her-well-snowy.vercel.app",
+  );
 });
 
 test("origin guard permits credentialed requests from the configured client", () => {

@@ -4,6 +4,7 @@ import { User } from "./models.js";
 export function createCookieOptions(env = process.env) {
   const isCrossSite = env.COOKIE_SAMESITE === "none"
     || env.NODE_ENV === "production"
+    || Boolean(env.RAILWAY_PUBLIC_DOMAIN || env.RAILWAY_SERVICE_ID || env.RAILWAY_ENVIRONMENT_ID)
     || (env.APP_ORIGIN && !env.APP_ORIGIN.includes("localhost"));
   return {
     httpOnly: true,
