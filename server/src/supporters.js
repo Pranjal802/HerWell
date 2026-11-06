@@ -5,6 +5,7 @@ import { requireAuth } from "./auth.js";
 import { appOrigin } from "./config.js";
 import { sendAccountEmail } from "./email.js";
 import { isOccurrenceDate, isValidDateKey } from "./recurrence.js";
+import { getExistingInvitationState } from "./supporterInvitations.js";
 
 export const supportersRouter = Router();
 supportersRouter.use(requireAuth);
@@ -37,13 +38,30 @@ supportersRouter.post("/invite", async (req, res, next) => {
     const owner = await User.findById(req.userId).select("name email");
     if (email === owner.email) return res.status(400).json({ message: "Choose a different email address for your supporter." });
     const existing = await SupporterAccess.findOne({ owner: req.userId, email, status: { $in: ["pending", "accepted"] } });
-    if (existing) return res.status(409).json({ message: "There is already an active invitation or supporter for that email." });
+    const existingState = getExistingInvitationState(existing);
+    if (existingState === "accepted") {
+      return res.status(409).json({ message: "This person has already accepted your invitation. They should sign in with this email; you can share records from the Supporter access page." });
+    }
+    if (existingState === "pending") {
+      return res.status(409).json({ message: "An invitation is already pending for this email. Ask them to sign in with this exact email and open More > Supporter access." });
+    }
     const inviteToken = randomBytes(32).toString("base64url");
-    const supporter = await SupporterAccess.create({
-      owner: req.userId, email, permissions, inviteTokenHash: hashToken(inviteToken),
-      inviteExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      history: [{ action: "invited" }],
-    });
+    const previousInvitation = existingState === "expired"
+      ? {
+        permissions: [...existing.permissions],
+        inviteTokenHash: existing.inviteTokenHash,
+        inviteExpiresAt: existing.inviteExpiresAt,
+        history: existing.history.map(({ action, at }) => ({ action, at })),
+      }
+      : null;
+    const supporter = existingState === "expired"
+      ? existing
+      : new SupporterAccess({ owner: req.userId, email });
+    supporter.permissions = permissions;
+    supporter.inviteTokenHash = hashToken(inviteToken);
+    supporter.inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    supporter.history.push({ action: existingState === "expired" ? "reinvited" : "invited" });
+    await supporter.save();
     const link = new URL("/", appOrigin);
     link.searchParams.set("acceptInvite", inviteToken);
     try {
@@ -53,10 +71,22 @@ supportersRouter.post("/invite", async (req, res, next) => {
         text: `${owner.name} invited you to view selected HerWell information. Your invitation expires in seven days.\n\nReview and accept the invitation after signing in:\n${link}`,
       });
     } catch (error) {
-      await SupporterAccess.deleteOne({ _id: supporter._id });
+      if (previousInvitation) {
+        supporter.permissions = previousInvitation.permissions;
+        supporter.inviteTokenHash = previousInvitation.inviteTokenHash;
+        supporter.inviteExpiresAt = previousInvitation.inviteExpiresAt;
+        supporter.history = previousInvitation.history;
+        await supporter.save();
+      } else {
+        await SupporterAccess.deleteOne({ _id: supporter._id });
+      }
       return next(error);
     }
-    return res.status(201).json({ message: "Invitation sent. You can update or revoke it at any time." });
+    return res.status(201).json({
+      message: existingState === "expired"
+        ? "The expired invitation was renewed and a new link was sent. Ask them to sign in with this email."
+        : "Invitation sent. You can update or revoke it at any time.",
+    });
   } catch (error) { return next(error); }
 });
 
