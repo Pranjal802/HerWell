@@ -10,6 +10,7 @@ import { supportersRouter } from "./supporters.js";
 import { notificationsRouter, startNotificationScheduler } from "./notifications.js";
 import { appOrigin } from "./config.js";
 import { createOriginGuard } from "./originGuard.js";
+import { aiRouter } from "./ai.routes.js";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
@@ -42,6 +43,7 @@ app.use("/api/records", recordsRouter);
 app.use("/api/documents", documentsRouter);
 app.use("/api/supporters", supportersRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/ai", aiRouter);
 app.get("/api/health", (_req, res) => res.json({ status: mongoose.connection.readyState === 1 ? "ok" : "starting" }));
 app.use((error, _req, res, _next) => {
   console.error("Request failed:", error.message);

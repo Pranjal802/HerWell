@@ -61,7 +61,7 @@ function isValidRecurrence(value) {
 function issueSession(user, res) {
   const token = jwt.sign({ sub: user.id, ver: user.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: "7d" });
   res.cookie("herwell_session", token, cookieOptions);
-  return { id: user.id, name: user.name, email: user.email, profile: user.profile };
+  return { token, id: user.id, name: user.name, email: user.email, profile: user.profile };
 }
 
 function hashToken(token) {
@@ -135,7 +135,7 @@ authRouter.post("/login", async (req, res, next) => {
       return res.status(401).json({ message: "That email and password don't match. Please try again." });
     }
     if (!user.emailVerifiedAt) return res.status(403).json({ message: "Please verify your email before signing in." });
-    return res.json({ user: issueSession(user, res) });
+    const session = issueSession(user, res); return res.json({ token: session.token, user: session });
   } catch (error) { return next(error); }
 });
 
@@ -147,7 +147,7 @@ authRouter.post("/verify-email", async (req, res, next) => {
     const user = await User.findByIdAndUpdate(authToken.user, { emailVerifiedAt: new Date() }, { new: true });
     await AuthToken.deleteMany({ user: authToken.user, purpose: "verify-email" });
     if (!user) return res.status(400).json({ message: "This account could not be found." });
-    return res.json({ user: issueSession(user, res) });
+    const session = issueSession(user, res); return res.json({ token: session.token, user: session });
   } catch (error) { return next(error); }
 });
 

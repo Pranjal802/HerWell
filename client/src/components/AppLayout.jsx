@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Bell, BookOpen, CalendarDays, ChevronRight, FileText, HeartPulse, Home,
   ListChecks, LockKeyhole, LogOut, Menu, Plus, Settings, ShieldCheck,
-  Utensils, Users, X,
+  Sparkles, Utensils, Users, X,
 } from "lucide-react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import Brand from "./Brand.jsx";
@@ -19,6 +19,7 @@ const navigation = [
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/journal", label: "My Journal", icon: BookOpen },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/ai", label: "HerWell AI", icon: Sparkles },
 ];
 
 const mobileNavigation = [
@@ -26,7 +27,7 @@ const mobileNavigation = [
   { to: "/planner", label: "Plan", icon: ListChecks, matches: ["/planner", "/meals", "/reminders"] },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/wellness", label: "Care", icon: HeartPulse, matches: ["/wellness", "/healthcare", "/documents"] },
-  { to: "/more", label: "More", icon: Menu, matches: ["/more", "/journal", "/supporters", "/settings"] },
+  { to: "/more", label: "More", icon: Menu, matches: ["/more", "/journal", "/supporters", "/settings", "/ai"] },
 ];
 
 const sectionTabs = {
@@ -133,6 +134,7 @@ export default function AppLayout({ user, onLogout, notice, onDismissNotice, onQ
         </div>
         <div className="hw-topbar-actions">
           <span className="hw-topbar-date">{formattedDate}</span>
+          <Link to="/ai" className="hw-icon-button hw-topbar-ai-btn" aria-label="HerWell AI" title="HerWell AI Assistant"><Sparkles size={20} /></Link>
           <Link to="/reminders" className="hw-icon-button" aria-label="View reminders"><Bell size={20} /></Link>
           <button className="hw-profile-button" onClick={() => navigate("/settings")} aria-label="Open profile and settings">
             {avatarAvailable && <img key={avatarRevision} src={`/api/documents/avatar?rev=${avatarRevision}`} alt="" onError={() => setAvatarAvailable(false)} />}
@@ -170,6 +172,7 @@ export default function AppLayout({ user, onLogout, notice, onDismissNotice, onQ
       })}
     </nav>
 
+    {location.pathname !== "/ai" && <Link to="/ai" className="hw-ai-floating-fab" aria-label="Open HerWell AI" title="Chat with HerWell AI"><Sparkles size={22} strokeWidth={2} /></Link>}
     <button className="hw-fab" onClick={() => setQuickAddOpen(true)} aria-label="Quick add"><Plus size={27} strokeWidth={2} /></button>
     {quickAddOpen && <QuickAddSheet onClose={() => setQuickAddOpen(false)} onQuickAdd={(category) => { setQuickAddOpen(false); onQuickAdd(category); }} />}
   </div>;

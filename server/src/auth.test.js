@@ -4,15 +4,15 @@ import { createCookieOptions } from "./auth.js";
 import { createOriginGuard } from "./originGuard.js";
 
 test("production session cookies support the cross-origin client securely", () => {
-  const options = createCookieOptions(true);
+  const options = createCookieOptions({ NODE_ENV: "production" });
   assert.equal(options.sameSite, "none");
   assert.equal(options.secure, true);
   assert.equal(options.httpOnly, true);
 });
 
 test("development session cookies remain same-site and non-secure", () => {
-  const options = createCookieOptions(false);
-  assert.equal(options.sameSite, "strict");
+  const options = createCookieOptions({ NODE_ENV: "development", APP_ORIGIN: "http://localhost:5173" });
+  assert.equal(options.sameSite, "lax");
   assert.equal(options.secure, false);
 });
 

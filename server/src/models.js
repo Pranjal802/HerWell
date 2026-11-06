@@ -142,3 +142,12 @@ export const SupporterAccess = mongoose.model("SupporterAccess", supporterSchema
 export const Notification = mongoose.model("Notification", notificationSchema);
 export const MedicalDocument = mongoose.model("MedicalDocument", documentSchema);
 export const PushSubscription = mongoose.model("PushSubscription", pushSubscriptionSchema);
+
+const aiMessageSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  role: { type: String, enum: ["user", "assistant"], required: true },
+  content: { type: String, required: true, maxlength: 4000 },
+}, { timestamps: true });
+aiMessageSchema.index({ user: 1, createdAt: 1 });
+
+export const AiMessage = mongoose.model("AiMessage", aiMessageSchema);

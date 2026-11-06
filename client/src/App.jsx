@@ -14,6 +14,7 @@ import CalendarPage from "./pages/CalendarPage.jsx";
 import SupportersPage from "./pages/SupportersPage.jsx";
 import SettingsPage from "./pages/SettingsPage.jsx";
 import MorePage from "./pages/MorePage.jsx";
+import AiPage from "./pages/AiPage.jsx";
 import RecordForm from "./components/RecordForm.jsx";
 import { localDateKey, occurrenceStatus } from "./lib/recurrence.js";
 import "./styles.css";
@@ -104,7 +105,12 @@ function Workspace({ user, setUser, notice, setNotice }) {
   }
 
   async function logout() {
-    await api("/auth/logout", { method: "POST" });
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch (_) {}
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("herwell_token");
+    }
     setUser(null);
     navigate("/");
   }
@@ -123,6 +129,7 @@ function Workspace({ user, setUser, notice, setNotice }) {
         <Route path="/documents" element={<DocumentsPage setNotice={setNotice} />} />
         <Route path="/supporters" element={<SupportersPage records={records} onShare={shareRecord} setNotice={setNotice} />} />
         <Route path="/settings" element={<SettingsPage user={user} setUser={setUser} setNotice={setNotice} />} />
+        <Route path="/ai" element={<AiPage />} />
         <Route path="/more" element={<MorePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
