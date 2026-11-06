@@ -210,7 +210,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .hw-sidebar-brand > a > span:last-child { display: none; }
   .hw-sidebar-brand p, .hw-sidebar-eyebrow, .hw-privacy-card, .hw-account-name { display: none; }
   .hw-sidebar-secondary { display: flex; flex-direction: column; gap: 4px; }
-  .hw-desktop-nav { display: flex; flex: 1; flex-direction: column; gap: 4px; overflow-y: auto; }
+  .hw-desktop-nav { display: flex; flex: 1; flex-direction: column; gap: 4px; overflow-y: auto; scrollbar-width: none; }
+  .hw-desktop-nav::-webkit-scrollbar { display: none; }
   .hw-nav-link { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 12px; border-radius: 12px; color: var(--color-text-secondary); text-decoration: none; }
   .hw-nav-link:hover, .hw-nav-link.is-active { background: var(--color-primary-100); color: var(--color-primary-700); }
   .hw-nav-link > span { display: none; }
